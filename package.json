@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@tensorflow-models/knn-classifier": "^1.0.0",
+    "@tensorflow-models/posenet": "^1.0.0",
+    "@tensorflow/tfjs": "^1.0.2",
     "@types/jest": "24.0.11",
     "@types/node": "11.11.6",
     "@types/react": "16.8.8",
     "@types/react-dom": "16.8.3",
+    "bootstrap": "^4.3.1",
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
+    "react-player": "^1.9.3",
     "react-scripts": "2.1.8",
     "typescript": "3.3.4000"
   },
