@@ -7,6 +7,7 @@ import { loadClassifierFromLocalStorage, saveClassifierInLocalStorage } from './
 import { Tensor2D } from '@tensorflow/tfjs';
 import { async } from 'q';
 import Pose from './Pose';
+import VideoPlayer from './VideoPlayer';
 
 const poseClasses = ['withFingerOnMouth', 'coding'];
 
@@ -23,8 +24,6 @@ const getClass = (label: string) => {
 };
 
 class App extends Component {
-  videoRef: React.RefObject<HTMLVideoElement> = React.createRef<HTMLVideoElement>();
-  normalizationVector?: [number, number];
   endAddingExampleTimeout?: number;
   classifier: knnClassifier.KNNClassifier = knnClassifier.create();
 
@@ -35,13 +34,20 @@ class App extends Component {
     addingExample: number | null,
     classExampleCount: ClassExampleCount,
     videoPlaying: boolean,
-    keypoints?: [number, number][]
+    keypoints?: [number, number][],
+    videoSource:  {
+      liveVideo: boolean,
+      videoUrl?: string
+    }
   } = {
     videoLoaded: false,
     classId: -1,
     addingExample: null,
     classExampleCount: {},
-    videoPlaying: false
+    videoPlaying: false,
+    videoSource: {
+      liveVideo: false,
+    }
   };
 
   async componentDidMount() {
@@ -65,28 +71,11 @@ class App extends Component {
     saveClassifierInLocalStorage(this.classifier);
   }
 
-  videoLoaded = () => {
-    const video = this.videoRef.current;
-    if (video) {
-      video.width = video.videoWidth;
-      video.height = video.videoHeight;
-
-      this.normalizationVector = [1/video.width, 1/video.height];
-
-      this.setState({
-        videoLoaded: true,
-      });
-
-      this.updateClassification();
-    }
-  }
-
-  estimateKeypoints = async () => {
-    if (this.state.posenetModel && this.videoRef.current && this.normalizationVector) {
+  estimateKeypoints = async (video: HTMLVideoElement) => {
+    if (this.state.posenetModel) {
       const keypoints = await estimateAndNormalizeKeypoints(
         this.state.posenetModel,
-        this.videoRef.current,
-        this.normalizationVector
+        video
       );
 
       this.setState({keypoints});
@@ -147,8 +136,6 @@ class App extends Component {
 
     const prediction = await this.classifier.predictClass(keypointsTensor);
 
-    console.log('got prediction', prediction);
-
     keypointsTensor.dispose();
 
     return prediction.classIndex;
@@ -196,16 +183,14 @@ class App extends Component {
         <div className="row">
           <div className="col-sm">
             <h2>Video</h2>
-            <video controls ref={this.videoRef} onLoadedMetadata={this.videoLoaded} onTimeUpdate={this.frameChanged}>
-              <source src={process.env.PUBLIC_URL + 'mecoding.mp4'} type="video/mp4" />
-            </video>
-          </div>
+            <VideoPlayer frameChanged={this.frameChanged}  />
+         </div>
           <div className="col-sm">
             <h3>Pose</h3>
             <Pose keypoints={this.state.keypoints} width={200} height={200*480/640}/>
             <h3>Classifications (number examples)</h3>
             <h5>Click a classification to add an example from the pose of the current frame</h5>
-              {this.state.videoLoaded && (
+              {(
                 poseClasses.map((poseClass, id) => (
                   <button key={id}
                     className={`btn ${this.getButtonClass(poseClass, id)}`}
@@ -229,15 +214,13 @@ class App extends Component {
 
 const estimateAndNormalizeKeypoints = async (
   posenetModel: posenet.PoseNet,
-  video: HTMLVideoElement,
-  [nx, ny]: [number, number]): Promise<number[][] | undefined> => {
-
+  video: HTMLVideoElement): Promise<number[][] | undefined> => {
   const poses = await posenetModel.estimateMultiplePoses(video);
   if (poses.length === 0) {
     return undefined;
   }
 
-  return poses[0].keypoints.map(p => ([p.position.x * nx, p.position.y * ny] ));
+  return poses[0].keypoints.map(p => ([p.position.x / video.width, p.position.y / video.height] ));
 }
 
 export default App;
