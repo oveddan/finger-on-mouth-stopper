@@ -1,0 +1,50 @@
+import React from 'react'
+import * as posenet from "@tensorflow-models/posenet"
+import { connectedPartIndices } from '@tensorflow-models/posenet/dist/keypoints';
+
+type PoseProps = {
+  keypoints?: [number, number][],
+  width: number,
+  height: number
+}
+
+type AdjacentKeypoints = [[number, number], [number, number]][];
+
+function getAdjacentKeyPoints(
+  keypoints: [number, number][]): AdjacentKeypoints {
+return connectedPartIndices.reduce(
+    (result: AdjacentKeypoints, [leftJoint, rightJoint]): AdjacentKeypoints => {
+      result.push([keypoints[leftJoint], keypoints[rightJoint]]);
+
+      return result;
+    }, []);
+}
+
+const lineStyle = {
+  stroke:'rgb(255,0,0)',
+  strokeWidth:2
+}
+
+const rectStyle = {
+  stroke:'rgb(0,0,0)',
+  strokeWidth:2,
+  fill: 'none'
+}
+
+const Pose = ({keypoints, width, height}: PoseProps) => {
+  let adjacentKeypoints: AdjacentKeypoints = [];
+
+  if (keypoints)
+     adjacentKeypoints = getAdjacentKeyPoints(keypoints);
+
+  return (
+    <svg width={width} height={height} >
+      <rect width={width} height={height} style={rectStyle}/>
+      {(adjacentKeypoints.map(([[x1, y1], [x2, y2]], index)=> (
+        <line style={lineStyle} key={index} x1={x1 * width} y1={y1 * height} x2={x2 * width} y2={y2 * height}  />
+      )))}
+    </svg>
+  )
+};
+
+export default Pose;

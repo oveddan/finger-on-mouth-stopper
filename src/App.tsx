@@ -4,6 +4,9 @@ import * as posenet from "@tensorflow-models/posenet";
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
 import { loadClassifierFromLocalStorage, saveClassifierInLocalStorage } from './classifierStorage';
+import { Tensor2D } from '@tensorflow/tfjs';
+import { async } from 'q';
+import Pose from './Pose';
 
 const poseClasses = ['withFingerOnMouth', 'coding'];
 
@@ -21,7 +24,7 @@ const getClass = (label: string) => {
 
 class App extends Component {
   videoRef: React.RefObject<HTMLVideoElement> = React.createRef<HTMLVideoElement>();
-  normalizationVector?: tf.Tensor1D;
+  normalizationVector?: [number, number];
   endAddingExampleTimeout?: number;
   classifier: knnClassifier.KNNClassifier = knnClassifier.create();
 
@@ -29,14 +32,13 @@ class App extends Component {
     posenetModel?: posenet.PoseNet,
     videoLoaded: boolean,
     classId: number,
-    autoClassify: boolean,
     addingExample: number | null,
     classExampleCount: ClassExampleCount,
-    videoPlaying: boolean
+    videoPlaying: boolean,
+    keypoints?: [number, number][]
   } = {
     videoLoaded: false,
     classId: -1,
-    autoClassify: true,
     addingExample: null,
     classExampleCount: {},
     videoPlaying: false
@@ -69,30 +71,27 @@ class App extends Component {
       video.width = video.videoWidth;
       video.height = video.videoHeight;
 
-      this.normalizationVector = tf.tensor1d([1/video.width, 1/video.height]);
+      this.normalizationVector = [1/video.width, 1/video.height];
 
       this.setState({
         videoLoaded: true,
       });
 
-      this.classify();
+      this.updateClassification();
     }
   }
 
-  estimateKeypoints = async (): Promise<tf.Tensor2D | null> => {
+  estimateKeypoints = async () => {
     if (this.state.posenetModel && this.videoRef.current && this.normalizationVector) {
-      const poses = await this.state.posenetModel.estimateMultiplePoses(this.videoRef.current);
-      if (poses.length === 0) {
-        return null;
-      }
+      const keypoints = await estimateAndNormalizeKeypoints(
+        this.state.posenetModel,
+        this.videoRef.current,
+        this.normalizationVector
+      );
 
-      return tf.tidy(() => {
-        const keypoints = tf.tensor2d(poses[0].keypoints.map(p => ([p.position.x, p.position.y])));
+      this.setState({keypoints});
 
-        return keypoints.mul(this.normalizationVector as tf.Tensor1D) as tf.Tensor2D;
-      })
-    } else {
-      return null;
+      this.updateClassification();
     }
   }
 
@@ -107,11 +106,11 @@ class App extends Component {
       addingExample: classId
     });
 
-    const keypoints = await this.estimateKeypoints();
+    const keypointsTensor = this.getKeypointsTensor();
 
-    if (keypoints) {
-      this.classifier.addExample(keypoints, classId);
-      keypoints.dispose();
+    if (keypointsTensor) {
+      this.classifier.addExample(keypointsTensor, classId);
+      keypointsTensor.dispose();
 
       this.saveClassifier();
     }
@@ -126,15 +125,33 @@ class App extends Component {
     }, 200);
   }
 
+  numberExamples() {
+    return Object.values(this.state.classExampleCount).reduce((sum, count) => sum + count, 0);
+  }
+
+  updateClassification = async() => {
+    const classId = await this.classify();
+
+    this.setState({
+      classId
+    });
+  }
+
   classify = async() => {
-    const keypoints = await this.estimateKeypoints();
-    if (keypoints) {
-       const prediction = await this.classifier.predictClass(keypoints);
-       this.setState({
-         classId: prediction.classIndex
-       });
-       keypoints.dispose();
-    }
+    if (this.numberExamples() === 0) return;
+
+    const keypointsTensor = this.getKeypointsTensor();
+
+    if (!keypointsTensor)
+      return;
+
+    const prediction = await this.classifier.predictClass(keypointsTensor);
+
+    console.log('got prediction', prediction);
+
+    keypointsTensor.dispose();
+
+    return prediction.classIndex;
   }
 
   resetClassifier = () => {
@@ -143,13 +160,6 @@ class App extends Component {
     this.setState({
       classExampleCount: this.classifier.getClassExampleCount()
     })
-  }
-
-
-  handleAutoclassifyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      autoClassify: e.target.checked
-    });
   }
 
   getButtonClass = (poseClass: string, poseClassIndex: number) => {
@@ -169,12 +179,14 @@ class App extends Component {
     return "btn-light";
   }
 
-  frameChanged = () => {
-    if (this.state.autoClassify) {
-      this.classify();
-    }
+  getKeypointsTensor(): Tensor2D | undefined {
+    if (!this.state.keypoints)
+      return undefined;
+
+    return tf.tensor2d(this.state.keypoints);
   }
 
+  frameChanged = this.estimateKeypoints
 
   render() {
     const { classExampleCount } = this.state;
@@ -189,6 +201,8 @@ class App extends Component {
             </video>
           </div>
           <div className="col-sm">
+            <h3>Pose</h3>
+            <Pose keypoints={this.state.keypoints} width={200} height={200*480/640}/>
             <h3>Classifications (number examples)</h3>
             <h5>Click a classification to add an example from the pose of the current frame</h5>
               {this.state.videoLoaded && (
@@ -203,19 +217,6 @@ class App extends Component {
             <ul className="list-unstyled">
               <h3>Actions</h3>
               <li>
-                <label>
-                   Auto Classifiy:
-                  <input
-                    name="autoClassify"
-                    type="checkbox"
-                    checked={this.state.autoClassify}
-                    onChange={this.handleAutoclassifyChange} />
-                </label>
-              </li>
-              <li>
-                <button disabled={this.state.autoClassify} onClick={this.classify}>Classify</button>
-              </li>
-              <li>
                 <button onClick={this.resetClassifier}>Reset classifier</button>
               </li>
             </ul>
@@ -224,6 +225,19 @@ class App extends Component {
       </div>
     );
   }
+}
+
+const estimateAndNormalizeKeypoints = async (
+  posenetModel: posenet.PoseNet,
+  video: HTMLVideoElement,
+  [nx, ny]: [number, number]): Promise<number[][] | undefined> => {
+
+  const poses = await posenetModel.estimateMultiplePoses(video);
+  if (poses.length === 0) {
+    return undefined;
+  }
+
+  return poses[0].keypoints.map(p => ([p.position.x * nx, p.position.y * ny] ));
 }
 
 export default App;
