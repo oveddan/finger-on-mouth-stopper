@@ -195,7 +195,6 @@ class App extends Component {
     return (
       <div className="App container-fluid">
         <h1>Pose Classifier</h1>
-        <Header />
         
         <div className="row">
           <div className="col-sm">
@@ -210,8 +209,6 @@ class App extends Component {
               classExampleCount={classExampleCount}
               getButtonClass={this.getButtonClass}
               addExample={this.addExample} 
-              updateLabel={this.updateLabel}
-              addLabel={this.addLabel}
             />
             <ul className="list-unstyled">
               <li>
@@ -221,6 +218,7 @@ class App extends Component {
             </ul>
           </div>
         </div>
+        <Header />
       </div>
     );
   }
