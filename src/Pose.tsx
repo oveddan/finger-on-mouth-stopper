@@ -43,7 +43,7 @@ const Pose = ({keypoints, width, height}: PoseProps) => {
      adjacentKeypoints = getAdjacentKeyPoints(keypoints);
 
   return (
-    <svg width={width} height={height} >
+    <svg width={width} height={height} style={{marginBottom: '0.5rem'}}>
       <rect width={width} height={height} style={rectStyle}/>
       {(keypoints && faceKeypoints.map(keypointIndex => (
         <circle style={circleStyle} r={2} cx={keypoints[keypointIndex][0] * width} cy={keypoints[keypointIndex][1] * height} />

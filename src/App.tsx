@@ -12,6 +12,8 @@ import Classifications, { ClassExampleCount } from './Classifications';
 
 const defaultLabels = ['withFingerOnMouth', 'coding'];
 
+const fingerOnMountClass = 0;
+
 
 class App extends Component {
   endAddingExampleTimeout?: number;
@@ -25,6 +27,7 @@ class App extends Component {
     classExampleCount: ClassExampleCount,
     videoPlaying: boolean,
     keypoints?: [number, number][],
+    makeSound: boolean,
     videoSource:  {
       liveVideo: boolean,
       videoUrl?: string
@@ -36,6 +39,7 @@ class App extends Component {
     addingExample: null,
     classExampleCount: {},
     videoPlaying: false,
+    makeSound: false,
     videoSource: {
       liveVideo: false,
     },
@@ -190,6 +194,13 @@ class App extends Component {
 
   frameChanged = this.estimateKeypoints
 
+  handleMakeSoundChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    this.setState({
+      makeSound: e.target.checked 
+    })
+  }
+
   render() {
     const { classExampleCount, labels, keypoints } = this.state;
     return (
@@ -201,21 +212,30 @@ class App extends Component {
             <VideoPlayer frameChanged={this.frameChanged}  />
          </div>
           <div className="col-sm">
+            <h5>Normalized Pose to Classify:</h5>
             <Pose keypoints={keypoints} width={200} height={200*480/640}/>
-            <h5>Classifications (number examples)</h5>
-            <p>Click a classification to add an example from the pose of the current video frame.</p>
+            <h5>Classifications (number examples):</h5>
             <Classifications 
               labels={labels} 
               classExampleCount={classExampleCount}
               getButtonClass={this.getButtonClass}
               addExample={this.addExample} 
             />
-            <ul className="list-unstyled">
-              <li>
-                <br /><br/>
-                <button className='btn btn-light' onClick={this.resetClassifier}>Reset classifier</button>
-              </li>
-            </ul>
+            <br /><br/>
+            <button className='btn btn-light' onClick={this.resetClassifier}>Reset classifier</button>
+
+            <br/><br/>
+            <label>
+              Make sound when hand is on mouth:
+              <input
+                name="makeSound"
+                type="checkbox"
+                checked={this.state.makeSound}
+                onChange={this.handleMakeSoundChanged} />
+            </label>
+            {this.state.makeSound && this.state.classId === fingerOnMountClass && (
+              <audio src={process.env.PUBLIC_URL + 'airhorn.mp3'} autoPlay loop/>
+            )}
           </div>
         </div>
         <Header />
@@ -227,20 +247,28 @@ class App extends Component {
 const estimateAndNormalizeKeypoints = async (
   posenetModel: posenet.PoseNet,
   video: HTMLVideoElement): Promise<number[][] | undefined> => {
-  const poses = await posenetModel.estimateMultiplePoses(video);
+  const poses = await posenetModel.estimateMultiplePoses(video, 1);
   if (poses.length === 0) {
     return undefined;
   }
 
-  return poses[0].keypoints.map(p => ([p.position.x / video.width, p.position.y / video.height] ));
+  const boundingBox = posenet.getBoundingBox(poses[0].keypoints);
+  const width = boundingBox.maxX - boundingBox.minX;
+  const height = boundingBox.maxY - boundingBox.minY;
+
+  // normalize keypoints to bounding box
+  return poses[0].keypoints.map(p => ([
+    (p.position.x - boundingBox.minX) / width, 
+    (p.position.y - boundingBox.minY) / height
+  ]));
 }
 
 const Header = () => (
   <div className='row'>
     <div className='col-sm'>
       <p>Classify poses from a live webcam feed or an existing video, 
-        using <a href='https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5'>PoseNet</a> 
-        and the <a href='https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier'>KNN Classifier.</a>
+        using <a href='https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5'>PoseNet </a> 
+        and the <a href='https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier'>KNN Classifier. </a>
         To add an entry to classify from the current frame, click the button for the corresponsding classification.
         The classification model <strong>is automatically saved to the browser <a href='https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage'>local storage,</a>
           </strong> and when the page is 
