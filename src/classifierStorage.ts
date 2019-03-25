@@ -43,22 +43,41 @@ function fromDatasetObject(datasetObject: DatasetObject): Dataset {
 
 const storageKey = "poseClassification";
 
-export async function saveClassifierInLocalStorage(classifier: knnClassifier.KNNClassifier) {
+type StorageEntry = {
+  dataset: DatasetObject,
+  labels: string[]
+}
+
+export async function saveClassifierAndLabelsInLocalStorage(classifier: knnClassifier.KNNClassifier, labels: string[]) {
   const dataset = classifier.getClassifierDataset();
   const datasetOjb: DatasetObject = await toDatasetObject(dataset);
-  const jsonStr = JSON.stringify(datasetOjb);
+  const storageEntry = {
+    dataset: datasetOjb,
+    labels
+  };
+  const jsonStr = JSON.stringify(storageEntry);
   //can be change to other source
   localStorage.setItem(storageKey, jsonStr);
 }
 
-export function loadClassifierFromLocalStorage(classifier: knnClassifier.KNNClassifier): void {
-  const datasetJson = localStorage.getItem(storageKey);
+/**
+ * 
+ * @param classifier 
+ * 
+ * @returns the list of labels
+ */
+export function loadClassifierAndLabelsFromLocalStorage(classifier: knnClassifier.KNNClassifier): string[] | null {
+  const storageJson = localStorage.getItem(storageKey);
 
-  if (datasetJson) {
-    const datasetObj = JSON.parse(datasetJson) as DatasetObject;
+  if (storageJson) {
+    const storageEntry = JSON.parse(storageJson) as StorageEntry;
 
-    const dataset = fromDatasetObject(datasetObj);
+    const dataset = fromDatasetObject(storageEntry.dataset);
 
     classifier.setClassifierDataset(dataset);
+
+    return storageEntry.labels;
   }
+
+  return null;
 }

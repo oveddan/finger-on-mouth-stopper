@@ -3,18 +3,15 @@ import './App.css';
 import * as posenet from "@tensorflow-models/posenet";
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
-import { loadClassifierFromLocalStorage, saveClassifierInLocalStorage } from './classifierStorage';
+import { loadClassifierAndLabelsFromLocalStorage, saveClassifierAndLabelsInLocalStorage } from './classifierStorage';
 import { Tensor2D } from '@tensorflow/tfjs';
 import { async } from 'q';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
+import Classifications, { ClassExampleCount } from './Classifications';
 
-const poseClasses = ['withFingerOnMouth', 'coding'].map((poseClass, index) => ({
-  name: poseClass,
-  id: index 
-}));
+const defaultLabels = ['withFingerOnMouth', 'coding'];
 
-type ClassExampleCount = {[classId: number]: number};
 
 class App extends Component {
   endAddingExampleTimeout?: number;
@@ -31,7 +28,8 @@ class App extends Component {
     videoSource:  {
       liveVideo: boolean,
       videoUrl?: string
-    }
+    },
+    labels: string[]
   } = {
     videoLoaded: false,
     classId: -1,
@@ -40,7 +38,8 @@ class App extends Component {
     videoPlaying: false,
     videoSource: {
       liveVideo: false,
-    }
+    },
+    labels: defaultLabels
   };
 
   async componentDidMount() {
@@ -54,14 +53,18 @@ class App extends Component {
   }
 
   loadClassifier() {
-    loadClassifierFromLocalStorage(this.classifier);
+    const labels = loadClassifierAndLabelsFromLocalStorage(this.classifier);
+    const labelsToUse = !labels || labels.length === 0 ? defaultLabels : labels;
+
     this.setState({
-      classExampleCount: this.classifier.getClassExampleCount()
+      classExampleCount: this.classifier.getClassExampleCount(),
+      labels: labelsToUse 
     });
   }
 
-  async saveClassifier() {
-    saveClassifierInLocalStorage(this.classifier);
+  saveClassifier = async () => {
+    console.log('the labesl', this.state, this.state.labels);
+    await saveClassifierAndLabelsInLocalStorage(this.classifier, this.state.labels);
   }
 
   estimateKeypoints = async (video: HTMLVideoElement) => {
@@ -117,6 +120,19 @@ class App extends Component {
     });
   }
 
+  updateLabel = async (classId: number, label: string | undefined) => {
+    if (!label) return;
+    const newLabels = this.state.labels.splice(0);
+
+    newLabels[classId] = label;
+
+    this.setState({
+      labels: newLabels
+    });
+
+    await this.saveClassifier();
+  }
+
   classify = async() => {
     if (this.numberExamples() === 0) return;
 
@@ -167,7 +183,7 @@ class App extends Component {
   frameChanged = this.estimateKeypoints
 
   render() {
-    const { classExampleCount } = this.state;
+    const { classExampleCount, labels, keypoints } = this.state;
     return (
       <div className="App container-fluid">
         <h1>Pose Classifier</h1>
@@ -178,18 +194,16 @@ class App extends Component {
             <VideoPlayer frameChanged={this.frameChanged}  />
          </div>
           <div className="col-sm">
-            <Pose keypoints={this.state.keypoints} width={200} height={200*480/640}/>
+            <Pose keypoints={keypoints} width={200} height={200*480/640}/>
             <h5>Classifications (number examples)</h5>
             <p>Click a classification to add an example from the pose of the current video frame.</p>
-              {(
-                poseClasses.map(({name, id}) => (
-                  <button key={id}
-                    className={`btn ${this.getButtonClass(id)}`}
-                    onClick={() => this.addExample(id)} >
-                    {`${name} (${classExampleCount[id] || 0})`}
-                  </button>
-                ))
-              )}
+            <Classifications 
+              labels={labels} 
+              classExampleCount={classExampleCount}
+              getButtonClass={this.getButtonClass}
+              addExample={this.addExample} 
+              updateLabel={this.updateLabel}
+            />
             <ul className="list-unstyled">
               <li>
                 <br /><br/>
@@ -223,8 +237,9 @@ const Header = () => (
         To add an entry to classify from the current frame, click the button for the corresponsding classification.
         The classification model <strong>is automatically saved to the browser <a href='https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage'>local storage,</a>
           </strong> and when the page is 
-        refreshed or loaded this saved model is loaded.
-      </p>
+        refreshed or loaded this saved model is loaded. </p>
+        <p>It works with a single pose, <b>and is best when one person in visible in the picture.</b>
+        </p>
     </div>
   </div>
 )
