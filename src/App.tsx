@@ -63,7 +63,6 @@ class App extends Component {
   }
 
   saveClassifier = async () => {
-    console.log('the labesl', this.state, this.state.labels);
     await saveClassifierAndLabelsInLocalStorage(this.classifier, this.state.labels);
   }
 
@@ -128,9 +127,17 @@ class App extends Component {
 
     this.setState({
       labels: newLabels
-    });
+    }, this.saveClassifier);
+  }
 
-    await this.saveClassifier();
+  addLabel = async (label: string) => {
+    const newLabels = this.state.labels.splice(0);
+
+    newLabels.push(label);
+
+    this.setState({
+      labels: newLabels
+    }, this.saveClassifier);
   }
 
   classify = async() => {
@@ -148,13 +155,14 @@ class App extends Component {
     return prediction.classIndex;
   }
 
-  resetClassifier = () => {
+  resetClassifier = async () => {
     this.classifier.clearAllClasses();
-    this.saveClassifier();
+
     this.setState({
-      classExampleCount: this.classifier.getClassExampleCount()
-    })
-  }
+      labels: defaultLabels,
+      classExampleCount: this.classifier.getClassExampleCount(),
+    }, async () => await this.saveClassifier());
+ }
 
   getButtonClass = (poseClassIndex: number) => {
     const { classId, addingExample } = this.state;
@@ -203,6 +211,7 @@ class App extends Component {
               getButtonClass={this.getButtonClass}
               addExample={this.addExample} 
               updateLabel={this.updateLabel}
+              addLabel={this.addLabel}
             />
             <ul className="list-unstyled">
               <li>
