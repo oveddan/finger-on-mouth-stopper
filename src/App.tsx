@@ -9,19 +9,12 @@ import { async } from 'q';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 
-const poseClasses = ['withFingerOnMouth', 'coding'];
-
-const poseClassIds: {[className: string]: number} = poseClasses.reduce(
-    (result: {[className: string]: number}, poseClass, index): {[className: string]: number} => {
-      result[poseClass] = index;
-      return result;
-    }, {});
+const poseClasses = ['withFingerOnMouth', 'coding'].map((poseClass, index) => ({
+  name: poseClass,
+  id: index 
+}));
 
 type ClassExampleCount = {[classId: number]: number};
-
-const getClass = (label: string) => {
-  return poseClassIds[label];
-};
 
 class App extends Component {
   endAddingExampleTimeout?: number;
@@ -84,9 +77,7 @@ class App extends Component {
     }
   }
 
-  addExample = async (label: string) => {
-    const classId = getClass(label);
-
+  addExample = async (classId: number) => {
     if (this.endAddingExampleTimeout) {
       window.clearTimeout(this.endAddingExampleTimeout);
     }
@@ -149,7 +140,7 @@ class App extends Component {
     })
   }
 
-  getButtonClass = (poseClass: string, poseClassIndex: number) => {
+  getButtonClass = (poseClassIndex: number) => {
     const { classId, addingExample } = this.state;
     if (addingExample !== null) {
       if (poseClassIndex === addingExample) {
@@ -180,29 +171,29 @@ class App extends Component {
     return (
       <div className="App container-fluid">
         <h1>Pose Classifier</h1>
+        <Header />
+        
         <div className="row">
           <div className="col-sm">
-            <h2>Video</h2>
             <VideoPlayer frameChanged={this.frameChanged}  />
          </div>
           <div className="col-sm">
-            <h3>Pose</h3>
             <Pose keypoints={this.state.keypoints} width={200} height={200*480/640}/>
-            <h3>Classifications (number examples)</h3>
-            <h5>Click a classification to add an example from the pose of the current frame</h5>
+            <h5>Classifications (number examples)</h5>
+            <p>Click a classification to add an example from the pose of the current video frame.</p>
               {(
-                poseClasses.map((poseClass, id) => (
+                poseClasses.map(({name, id}) => (
                   <button key={id}
-                    className={`btn ${this.getButtonClass(poseClass, id)}`}
-                    onClick={() => this.addExample(poseClass)} >
-                    {`${poseClass} (${classExampleCount[id] || 0})`}
+                    className={`btn ${this.getButtonClass(id)}`}
+                    onClick={() => this.addExample(id)} >
+                    {`${name} (${classExampleCount[id] || 0})`}
                   </button>
                 ))
               )}
             <ul className="list-unstyled">
-              <h3>Actions</h3>
               <li>
-                <button onClick={this.resetClassifier}>Reset classifier</button>
+                <br /><br/>
+                <button className='btn btn-light' onClick={this.resetClassifier}>Reset classifier</button>
               </li>
             </ul>
           </div>
@@ -222,5 +213,20 @@ const estimateAndNormalizeKeypoints = async (
 
   return poses[0].keypoints.map(p => ([p.position.x / video.width, p.position.y / video.height] ));
 }
+
+const Header = () => (
+  <div className='row'>
+    <div className='col-sm'>
+      <p>Classify poses from a live webcam feed or an existing video, 
+        using <a href='https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5'>PoseNet</a> 
+        and the <a href='https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier'>KNN Classifier.</a>
+        To add an entry to classify from the current frame, click the button for the corresponsding classification.
+        The classification model <strong>is automatically saved to the browser <a href='https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage'>local storage,</a>
+          </strong> and when the page is 
+        refreshed or loaded this saved model is loaded.
+      </p>
+    </div>
+  </div>
+)
 
 export default App;

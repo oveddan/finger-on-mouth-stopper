@@ -106,7 +106,7 @@ export default class VideoPlayer extends Component<Props, State> {
         <div className="input-group mb-3">
           <div className="input-group-prepend" id="button-addon3">
             <button className={`btn ${buttonClass(this.state.useCamera)}`} type="button" onClick={this.handleWebcamClicked}>Webcam</button>
-            <button className={`btn ${buttonClass(!this.state.useCamera)}`} type="button" onClick={this.handleVideoClicked}>Video</button>
+            <button className={`btn ${buttonClass(!this.state.useCamera)}`} type="button" onClick={this.handleVideoClicked}>Existing Video</button>
           </div>
           <input type="text"
             className="form-control"
@@ -117,7 +117,11 @@ export default class VideoPlayer extends Component<Props, State> {
             onChange={this.handleUrlChanged}
            />
         </div>
-        <video controls={!this.state.useCamera} ref={this.videoRef} onLoadedMetadata={this.videoLoaded} onTimeUpdate={this.frameChanged}>
+        <video controls={!this.state.useCamera}
+          ref={this.videoRef}
+          onLoadedMetadata={this.videoLoaded}
+          onTimeUpdate={this.frameChanged}
+        >
           <source src={this.state.videoUrl} type="video/mp4" />
         </video>
       </div>
