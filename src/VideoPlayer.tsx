@@ -34,7 +34,7 @@ export default class VideoPlayer extends Component<Props, State> {
 
   state: State = {
     useCamera: false,
-    videoUrl: process.env.PUBLIC_URL + 'mecoding.mp4'
+    videoUrl: process.env.PUBLIC_URL + 'captureDay1.mp4'
   }
 
   videoLoaded = () => {

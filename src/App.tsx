@@ -9,6 +9,7 @@ import { async } from 'q';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 import Classifications, { ClassExampleCount } from './Classifications';
+import EditableClassifications from './EditableClassifications';
 
 const defaultLabels = ['withFingerOnMouth', 'coding'];
 
@@ -28,6 +29,7 @@ class App extends Component {
     videoPlaying: boolean,
     keypoints?: [number, number][],
     makeSound: boolean,
+    editingClassifications: boolean,
     videoSource:  {
       liveVideo: boolean,
       videoUrl?: string
@@ -39,6 +41,7 @@ class App extends Component {
     addingExample: null,
     classExampleCount: {},
     videoPlaying: false,
+    editingClassifications: false,
     makeSound: false,
     videoSource: {
       liveVideo: false,
@@ -201,6 +204,10 @@ class App extends Component {
     })
   }
 
+  toggleEditClassifications = () => {
+    this.setState({editingClassifications: !this.state.editingClassifications});
+  }
+
   render() {
     const { classExampleCount, labels, keypoints } = this.state;
     return (
@@ -214,13 +221,34 @@ class App extends Component {
           <div className="col-sm">
             <h5>Normalized Pose to Classify:</h5>
             <Pose keypoints={keypoints} width={200} height={200*480/640}/>
-            <h5>Classifications (number examples):</h5>
-            <Classifications 
-              labels={labels} 
-              classExampleCount={classExampleCount}
-              getButtonClass={this.getButtonClass}
-              addExample={this.addExample} 
-            />
+            <h5>
+              Classifications (number examples): 
+              {!this.state.editingClassifications && (
+                <a href="#" onClick={this.toggleEditClassifications}>edit</a>
+              )}
+            </h5>
+            {this.state.editingClassifications && (
+              <EditableClassifications
+                labels={labels} 
+                classExampleCount={classExampleCount}
+                getButtonClass={this.getButtonClass}
+                addExample={this.addExample} 
+                addLabel={this.addLabel}
+                updateLabel={this.updateLabel}
+              />
+            )}
+            {!this.state.editingClassifications && (
+              <Classifications 
+                labels={labels} 
+                classExampleCount={classExampleCount}
+                getButtonClass={this.getButtonClass}
+                addExample={this.addExample} 
+              />
+
+            )}
+            {this.state.editingClassifications && (
+              <a href="#" onClick={this.toggleEditClassifications}>done editing</a>
+            )}
             <br /><br/>
             <button className='btn btn-light' onClick={this.resetClassifier}>Reset classifier</button>
 
@@ -247,7 +275,7 @@ class App extends Component {
 const estimateAndNormalizeKeypoints = async (
   posenetModel: posenet.PoseNet,
   video: HTMLVideoElement): Promise<number[][] | undefined> => {
-  const poses = await posenetModel.estimateMultiplePoses(video, 1);
+  const poses = await posenetModel.estimateMultiplePoses(video, 1, false, 8, 1);
   if (poses.length === 0) {
     return undefined;
   }
@@ -257,10 +285,13 @@ const estimateAndNormalizeKeypoints = async (
   const height = boundingBox.maxY - boundingBox.minY;
 
   // normalize keypoints to bounding box
-  return poses[0].keypoints.map(p => ([
-    (p.position.x - boundingBox.minX) / width, 
-    (p.position.y - boundingBox.minY) / height
-  ]));
+  // return poses[0].keypoints.map(p => ([
+  //   (p.position.x - boundingBox.minX) / width, 
+  //   (p.position.y - boundingBox.minY) / height
+  // ]));
+  return poses[0].keypoints.map(({position: { x, y }})=> (
+    [x / video.width, y / video.height] 
+  ));
 }
 
 const Header = () => (
