@@ -18,7 +18,6 @@ const fingerOnMountClass = 0;
 class App extends Component {
   endAddingExampleTimeout?: number;
   classifier: knnClassifier.KNNClassifier = knnClassifier.create();
-  canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef<HTMLCanvasElement>();
 
   state: {
     posenetModel?: posenet.PoseNet,
@@ -88,70 +87,11 @@ class App extends Component {
         return;
       }
 
-      const poses = await this.state.posenetModel.estimateMultiplePoses(videoTensor, 1, false, 8, 1);
+      const keypoints = await estimateAndNormalizeKeypoints(this.state.posenetModel, videoTensor);
 
-      const firstPose = poses[0];
+      this.setState({keypoints});
 
-      if (firstPose) {
-        const boundingBox = posenet.getBoundingBox(firstPose.keypoints);
-
-        const padding = 50;
-
-        const minY = Math.floor(Math.max(0, boundingBox.minY - padding));
-        const minX = Math.floor(Math.max(0, boundingBox.minX - padding));
-        const maxY = Math.floor(Math.min(video.height, boundingBox.maxY + padding));
-        const maxX = Math.floor(Math.min(video.width, boundingBox.maxX + padding));
-        const width = maxX - minX;
-        const height = maxY - minY;
-
-        console.log(minX, minY, maxX, maxY);
-
-        const cropped = videoTensor.slice(
-          [minY, minX, 0], 
-          [height, width, 3]
-        )
-
-        const poseInBox = (await this.state.posenetModel.estimateMultiplePoses(cropped, 1, false, 8, 1))[0];
-
-        let keypoints;
-
-        if (poseInBox) {
-          const scaleW = video.width / width;
-          const scaleH = video.height / height;
-          const paddingW = minX;
-          const paddingH = minY;
-          keypoints = poseInBox.keypoints.map(({position: {x, y}})=> (
-            [(x * scaleW) / video.width, (y  * scaleH) / video.height]
-          ));
-
-        }
-
-        this.setState({
-          keypoints
-        });
-
-        if (this.canvasRef.current) {
-          this.canvasRef.current.width = width;
-          this.canvasRef.current.height = height;
-          await tf.browser.toPixels(cropped, this.canvasRef.current);
-        }
-
-        videoTensor.dispose();
-        cropped.dispose();
-
-      } else {
-        // this.setState({
-        //   keypoints: undefined,
-        //   box: undefined
-        // });
-      }
-
-      // const personDetections = await estimatePersonBoxes(this.state.detectionModel, videoTensor);
-
-      // const normalizedDetections = normalizeBoxes(personDetections, videoTensor);
       this.updateClassification();
-
-      
     }
   }
 
@@ -288,7 +228,6 @@ class App extends Component {
          </div>
           <div className="col-sm">
             <h5>Normalized Pose to Classify:</h5>
-            <canvas ref={this.canvasRef} />
             <Pose keypoints={keypoints} boxes={personDetections} width={200} height={200*480/640}/>
             <h5>
               Classifications (number examples): 
