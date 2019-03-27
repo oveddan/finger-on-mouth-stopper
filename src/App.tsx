@@ -5,11 +5,11 @@ import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
 import { loadClassifierAndLabelsFromLocalStorage, saveClassifierAndLabelsInLocalStorage } from './classifierStorage';
 import { Tensor2D } from '@tensorflow/tfjs';
-import { async } from 'q';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 import Classifications, { ClassExampleCount } from './Classifications';
 import EditableClassifications from './EditableClassifications';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 const defaultLabels = ['withFingerOnMouth', 'coding'];
 
@@ -22,12 +22,14 @@ class App extends Component {
 
   state: {
     posenetModel?: posenet.PoseNet,
+    detectionModel?: cocoSsd.ObjectDetection,
     videoLoaded: boolean,
     classId: number,
     addingExample: number | null,
     classExampleCount: ClassExampleCount,
     videoPlaying: boolean,
     keypoints?: [number, number][],
+    personDetections: [number, number, number, number][],
     makeSound: boolean,
     editingClassifications: boolean,
     videoSource:  {
@@ -43,6 +45,7 @@ class App extends Component {
     videoPlaying: false,
     editingClassifications: false,
     makeSound: false,
+    personDetections: [],
     videoSource: {
       liveVideo: false,
     },
@@ -51,11 +54,13 @@ class App extends Component {
 
   async componentDidMount() {
     const posenetModel = await posenet.load();
+    const detectionModel = await cocoSsd.load(); 
 
     this.loadClassifier();
 
     this.setState({
       posenetModel,
+      detectionModel
     })
   }
 
@@ -74,13 +79,20 @@ class App extends Component {
   }
 
   estimateKeypoints = async (video: HTMLVideoElement) => {
-    if (this.state.posenetModel) {
+    if (this.state.posenetModel && this.state.detectionModel) {
+      const videoTensor = tf.browser.fromPixels(video);
+      const personDetections = await estimatePersonBoxes(this.state.detectionModel, videoTensor);
+
+      const normalizedDetections = normalizeBoxes(personDetections, videoTensor);
+
       const keypoints = await estimateAndNormalizeKeypoints(
         this.state.posenetModel,
-        video
+        videoTensor,
       );
 
-      this.setState({keypoints});
+      videoTensor.dispose();
+
+      this.setState({keypoints, personDetections: normalizedDetections});
 
       this.updateClassification();
     }
@@ -209,7 +221,7 @@ class App extends Component {
   }
 
   render() {
-    const { classExampleCount, labels, keypoints } = this.state;
+    const { classExampleCount, labels, keypoints, personDetections } = this.state;
     return (
       <div className="App container-fluid">
         <h1>Pose Classifier</h1>
@@ -220,7 +232,7 @@ class App extends Component {
          </div>
           <div className="col-sm">
             <h5>Normalized Pose to Classify:</h5>
-            <Pose keypoints={keypoints} width={200} height={200*480/640}/>
+            <Pose keypoints={keypoints} boxes={personDetections} width={200} height={200*480/640}/>
             <h5>
               Classifications (number examples): 
               {!this.state.editingClassifications && (
@@ -272,17 +284,35 @@ class App extends Component {
   }
 }
 
+const estimatePersonBoxes = async (
+  detectionModel: cocoSsd.ObjectDetection,
+  videoTensor: tf.Tensor3D,
+) => {
+  const detections = await detectionModel.detect(videoTensor);
+  
+  return detections.filter(detection => detection.class === "person")
+  .map(({bbox})=> bbox);
+}
+
+const normalizeBoxes = (boxes: [number, number, number, number][], videoTensor: tf.Tensor3D) => {
+  const [height, width] = videoTensor.shape;
+
+  return boxes.map(([x, y, w, h]) => [x / width, y / height, w / width, h / height]);
+}
+
 const estimateAndNormalizeKeypoints = async (
   posenetModel: posenet.PoseNet,
-  video: HTMLVideoElement): Promise<number[][] | undefined> => {
+  video: tf.Tensor3D): Promise<number[][] | undefined> => {
   const poses = await posenetModel.estimateMultiplePoses(video, 1, false, 8, 1);
   if (poses.length === 0) {
     return undefined;
   }
 
-  const boundingBox = posenet.getBoundingBox(poses[0].keypoints);
-  const width = boundingBox.maxX - boundingBox.minX;
-  const height = boundingBox.maxY - boundingBox.minY;
+  const [ height, width ] = video.shape;
+
+  // const boundingBox = posenet.getBoundingBox(poses[0].keypoints);
+  // const width = boundingBox.maxX - boundingBox.minX;
+  // const height = boundingBox.maxY - boundingBox.minY;
 
   // normalize keypoints to bounding box
   // return poses[0].keypoints.map(p => ([
@@ -290,7 +320,7 @@ const estimateAndNormalizeKeypoints = async (
   //   (p.position.y - boundingBox.minY) / height
   // ]));
   return poses[0].keypoints.map(({position: { x, y }})=> (
-    [x / video.width, y / video.height] 
+    [x / width, y / height] 
   ));
 }
 

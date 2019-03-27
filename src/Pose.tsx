@@ -5,7 +5,8 @@ import { connectedPartIndices } from '@tensorflow-models/posenet/dist/keypoints'
 type PoseProps = {
   keypoints?: [number, number][],
   width: number,
-  height: number
+  height: number,
+  boxes: [number, number, number, number][]
 }
 
 type AdjacentKeypoints = [[number, number], [number, number]][];
@@ -34,9 +35,15 @@ const rectStyle = {
   fill: 'none'
 }
 
+const boxStyle = {
+  stroke:'rgb(0,255,0)',
+  strokeWidth:2,
+  fill: 'none'
+}
+
 const faceKeypoints = [0, 1, 2, 3];
 
-const Pose = ({keypoints, width, height}: PoseProps) => {
+const Pose = ({keypoints, width, height, boxes}: PoseProps) => {
   let adjacentKeypoints: AdjacentKeypoints = [];
 
   if (keypoints)
@@ -45,6 +52,9 @@ const Pose = ({keypoints, width, height}: PoseProps) => {
   return (
     <svg width={width} height={height} style={{marginBottom: '0.5rem'}}>
       <rect width={width} height={height} style={rectStyle}/>
+      {(boxes.map(([x, y, w, h])=> (
+        <rect x={x * width} y={y * height} width={w * width} height={h * height} style={boxStyle} />
+      )))}
       {(keypoints && faceKeypoints.map(keypointIndex => (
         <circle style={circleStyle} r={2} cx={keypoints[keypointIndex][0] * width} cy={keypoints[keypointIndex][1] * height} />
       )))}
