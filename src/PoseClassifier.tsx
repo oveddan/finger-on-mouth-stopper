@@ -8,11 +8,7 @@ import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 import Classifications, { ClassExampleCount } from './Classifications';
 import EditableClassifications from './EditableClassifications';
-import { chunk, deleteExample } from './util';
-
-const defaultLabels = ['withFingerOnMouth', 'coding'];
-
-const fingerOnMountClass = 0;
+import { chunk, deleteExample, addKeypointsToDataset, setClassifierExamples, updateClassExamples } from './util';
 
 class App extends Component {
   endAddingExampleTimeout?: number;
@@ -24,11 +20,9 @@ class App extends Component {
     videoLoaded: boolean,
     classId: number,
     addingExample: number | null,
-    classExampleCount: ClassExampleCount,
     videoPlaying: boolean,
     keypoints?: [number, number][],
     personDetections: [number, number, number, number][],
-    makeSound: boolean,
     editingClassifications: boolean,
     videoSource:  {
       liveVideo: boolean,
@@ -39,40 +33,92 @@ class App extends Component {
     videoLoaded: false,
     classId: -1,
     addingExample: null,
-    classExampleCount: {},
     videoPlaying: false,
     editingClassifications: false,
-    makeSound: false,
     personDetections: [],
     dataset: [],
     videoSource: {
       liveVideo: false,
     },
-    labels: defaultLabels
+    labels: [] 
   };
 
   async componentDidMount() {
     const posenetModel = await posenet.load(1.00);
 
-    this.loadClassifier();
+    this.loadData();
 
     this.setState({
       posenetModel
     })
   }
 
-  loadClassifier() {
+  loadData() {
     const { labels, dataset } = loadClassifierLabelsFromLocalStorage();
 
+    if (dataset)
+      setClassifierExamples(this.classifier, dataset);
+    
     this.setState({
-      classExampleCount: this.classifier.getClassExampleCount(),
       labels,
       dataset
      });
   }
 
-  saveClassifier = async () => {
+  saveData = async () => {
     await saveClassifierAndLabelsInLocalStorage(this.state.dataset, this.state.labels);
+  }
+
+  addExample = async (classId: number) => {
+    if (this.endAddingExampleTimeout) {
+      window.clearTimeout(this.endAddingExampleTimeout);
+    }
+
+    this.setState({
+      addingExample: classId
+    });
+
+    const keypointsTensor = this.getKeypointsTensor();
+
+    if (keypointsTensor) {
+      const keypoints = await keypointsTensor.data();
+
+      this.setState({
+        dataset: addKeypointsToDataset(Array.from(keypoints), this.state.dataset, classId)
+      }, () => {
+        updateClassExamples(this.classifier, this.state.dataset, classId);
+
+        this.saveData();
+      });
+    }
+
+    this.endAddingExampleTimeout = window.setTimeout(() => {
+      this.setState({
+        addingExample: null,
+      });
+    }, 200);
+  }
+
+  deleteExample = (classId: number, example: number): void => {
+    this.setState({
+      dataset: deleteExample(this.state.dataset, classId, example)
+    }, () => {
+      updateClassExamples(this.classifier, this.state.dataset, classId);
+    });
+
+    requestAnimationFrame(() => {
+      this.setState({
+        classExampleCount: this.classifier.getClassExampleCount()
+      });
+    })
+  }
+
+  updateClassification = async() => {
+    const classId = await this.classify();
+
+    this.setState({
+      classId
+    });
   }
 
   estimateKeypoints = async (video: HTMLVideoElement) => {
@@ -93,45 +139,6 @@ class App extends Component {
     }
   }
 
-  addExample = async (classId: number) => {
-    if (this.endAddingExampleTimeout) {
-      window.clearTimeout(this.endAddingExampleTimeout);
-    }
-
-    this.setState({
-      addingExample: classId
-    });
-
-    const keypointsTensor = this.getKeypointsTensor();
-
-    if (keypointsTensor) {
-      this.classifier.addExample(keypointsTensor, classId);
-      keypointsTensor.dispose();
-
-      this.saveClassifier();
-    }
-
-    this.endAddingExampleTimeout = window.setTimeout(() => {
-      const classExampleCount = this.classifier.getClassExampleCount();
-
-      this.setState({
-        addingExample: null,
-        classExampleCount
-      });
-    }, 200);
-  }
-
-  numberExamples() {
-    return Object.values(this.state.classExampleCount).reduce((sum, count) => sum + count, 0);
-  }
-
-  updateClassification = async() => {
-    const classId = await this.classify();
-
-    this.setState({
-      classId
-    });
-  }
 
   updateLabel = async (classId: number, label: string | undefined) => {
     if (!label) return;
@@ -141,7 +148,7 @@ class App extends Component {
 
     this.setState({
       labels: newLabels
-    }, this.saveClassifier);
+    }, this.saveData);
   }
 
   addLabel = async (label: string) => {
@@ -151,11 +158,11 @@ class App extends Component {
 
     this.setState({
       labels: newLabels
-    }, this.saveClassifier);
+    }, this.saveData);
   }
 
   classify = async() => {
-    if (this.numberExamples() === 0) return;
+    if (Object.keys(this.state.dataset).length === 0) return;
 
     const keypointsTensor = this.getKeypointsTensor();
 
@@ -169,13 +176,14 @@ class App extends Component {
     return prediction.classIndex;
   }
 
-  resetClassifier = async () => {
-    this.classifier.clearAllClasses();
-
+  resetDataset = async () => {
     this.setState({
-      labels: defaultLabels,
-      classExampleCount: this.classifier.getClassExampleCount(),
-    }, async () => await this.saveClassifier());
+      dataset: {},
+      labels: []
+    }, () => {
+      this.classifier.clearAllClasses();
+      this.saveData();
+    });
  }
 
   getButtonClass = (poseClassIndex: number) => {
@@ -204,13 +212,6 @@ class App extends Component {
 
   frameChanged = this.estimateKeypoints
 
-  handleMakeSoundChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
-
-    this.setState({
-      makeSound: e.target.checked 
-    })
-  }
-
   toggleEditClassifications = () => {
     this.setState({editingClassifications: !this.state.editingClassifications});
   }
@@ -225,22 +226,8 @@ class App extends Component {
     return chunkedToPose;
   }
 
-  deleteExample = (classId: number, example: number): void => {
-    this.setState({
-      dataset: deleteExample(this.state.dataset, classId, number);
-    })
-
-    deleteExample(this.classifier, classId, example);
-
-    requestAnimationFrame(() => {
-      this.setState({
-        classExampleCount: this.classifier.getClassExampleCount()
-      });
-    })
-  }
-
   render() {
-    const { classExampleCount, labels, keypoints, personDetections } = this.state;
+    const { dataset, labels, keypoints, personDetections } = this.state;
     return (
       <div>
         <h1>Pose Classifier</h1>
@@ -261,7 +248,7 @@ class App extends Component {
               <div>
                 <EditableClassifications
                   labels={labels} 
-                  classExampleCount={classExampleCount}
+                  dataset={this.state.dataset}
                   getButtonClass={this.getButtonClass}
                   addExample={this.addExample} 
                   addLabel={this.addLabel}
@@ -274,7 +261,7 @@ class App extends Component {
             {!this.state.editingClassifications && (
               <Classifications 
                 labels={labels} 
-                classExampleCount={classExampleCount}
+                dataset={this.state.dataset}
                 getButtonClass={this.getButtonClass}
                 addExample={this.addExample} 
               />
@@ -284,42 +271,15 @@ class App extends Component {
               <a href="#" onClick={this.toggleEditClassifications}>done editing</a>
             )}
             <br /><br/>
-            <button className='btn btn-light' onClick={this.resetClassifier}>Reset classifier</button>
+            <button className='btn btn-light' onClick={this.resetDataset}>Reset classifier</button>
 
             <br/><br/>
-            <label>
-              Make sound when hand is on mouth:
-              <input
-                name="makeSound"
-                type="checkbox"
-                checked={this.state.makeSound}
-                onChange={this.handleMakeSoundChanged} />
-            </label>
-            {this.state.makeSound && this.state.classId === fingerOnMountClass && (
-              <audio src={process.env.PUBLIC_URL + 'airhorn.mp3'} autoPlay loop/>
-            )}
-          </div>
+            </div>
         </div>
         <Header />
       </div>
     );
   }
-}
-
-const estimatePersonBoxes = async (
-  detectionModel: cocoSsd.ObjectDetection,
-  videoTensor: tf.Tensor3D,
-) => {
-  const detections = await detectionModel.detect(videoTensor);
-  
-  return detections.filter(detection => detection.class === "person")
-  .map(({bbox})=> bbox);
-}
-
-const normalizeBoxes = (boxes: [number, number, number, number][], videoTensor: tf.Tensor3D) => {
-  const [height, width] = videoTensor.shape;
-
-  return boxes.map(([x, y, w, h]) => [x / width, y / height, w / width, h / height]);
 }
 
 const estimateAndNormalizeKeypoints = async (

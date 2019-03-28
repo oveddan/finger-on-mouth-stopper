@@ -6,18 +6,15 @@ export type Dataset = {
   [classId: number]: tf.Tensor<tf.Rank.R2>
 };
 
-export type DatasetObjectEntry = {
-  classId: number,
-  examples: Keypoints[]
+export type DatasetObject = {
+  [classId: number]: Keypoints[]
 };
-
-export type DatasetObject = DatasetObjectEntry[];
 
 const storageKey = "poseClassification";
 
 export type StorageEntry = {
-  dataset?: DatasetObject,
-  labels?: string[]
+  dataset: DatasetObject,
+  labels: string[]
 }
 
 export async function saveClassifierAndLabelsInLocalStorage(dataset: DatasetObject, labels: string[]) {
@@ -44,5 +41,8 @@ export function loadClassifierLabelsFromLocalStorage(): StorageEntry {
     return JSON.parse(storageJson) as StorageEntry;
  }
 
-  return {};
+  return {
+    labels: [],
+    dataset: {}
+  };
 }

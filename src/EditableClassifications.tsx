@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import EditClassKeypoints from './EditClassKeypoints'
+import { DatasetObject } from './classifierStorage';
 
 type State = {
   editingClassId?: number,
@@ -16,7 +17,7 @@ type Props = {
   addLabel: (label: string) => void,
   getClassificationKeypoints: (id: number) => Promise<[number, number][][]>, 
   deleteExample: (id: number, exampleIndex: number) => void,
-  classExampleCount: ClassExampleCount
+  dataset: DatasetObject
 }
 
 export type ClassExampleCount = {[classId: number]: number};
@@ -28,7 +29,7 @@ const EditableClassifications = ({
   labels, 
   getButtonClass, 
   addExample, 
-  classExampleCount, 
+  dataset,
   updateLabel, 
   addLabel, 
   getClassificationKeypoints,
@@ -82,7 +83,7 @@ const EditableClassifications = ({
               <button type="button" key={id}
                 className={`btn ${getButtonClass(id)}`}
                 onClick={() => addExample(id)} >
-                {`${name} (${classExampleCount[id] || 0})`}
+                {`${name} (${dataset[id] ? dataset[id].length : 0})`}
               </button>
             </div>
          )

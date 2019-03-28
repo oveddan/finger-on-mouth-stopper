@@ -1,15 +1,17 @@
 import React, { useState } from 'react'
+import { Dataset, DatasetObject } from './classifierStorage';
+import { datasetFromIteratorFn } from '@tensorflow/tfjs-data/dist/dataset';
 
 type Props = {
   labels: string[],
   getButtonClass: (id: number) => string,
   addExample: (id: number) => void,
-  classExampleCount: ClassExampleCount
+  dataset: DatasetObject
 }
 
 export type ClassExampleCount = {[classId: number]: number};
 
-const Classifications = ({labels, getButtonClass, addExample, classExampleCount}: Props) => {
+const Classifications = ({labels, getButtonClass, addExample, dataset}: Props) => {
   return (
     <div>
       {labels.map((name, id) => (
@@ -17,7 +19,7 @@ const Classifications = ({labels, getButtonClass, addExample, classExampleCount}
           className={`btn ${getButtonClass(id)}`}
           onClick={() => addExample(id)}
         >
-          {`${name} (${classExampleCount[id] || 0})`}
+          {`${name} (${dataset[id] ? dataset[id].length : 0})`}
         </button>
      ))}
     </div>
