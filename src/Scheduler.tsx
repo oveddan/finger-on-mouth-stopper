@@ -10,7 +10,7 @@ export default class Scheduler extends Component {
   };
 
   generateSchedule = () => {
-    const startTime = moment().startOf('day').add(8, "hour").add(45, "minute");
+    const startTime = moment().startOf('day').add(8, "hour");
     const endTime = startTime.clone().add(1, "hour");
 
     const entryDurationMinutes = 5;
@@ -23,17 +23,17 @@ export default class Scheduler extends Component {
       weight: 10,
     }, {
       name: 'eat breakfast',
-      weight: 20,
+      weight: 15,
     }, {
       name: 'get dressed',
-      weight: 10,
+      weight: 15,
       requiredPrecedent: 'shower'
     }, {
       name: 'stretch',
-      weight: 10
+      weight: 15
     }, {
       name: 'look at phone',
-      weight: 15
+      weight: 10
     }];
 
     const schedule = generateSchedule({
