@@ -1,58 +1,28 @@
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
+import { Keypoints } from "./types";
 
-type Dataset = {
+export type Dataset = {
   [classId: number]: tf.Tensor<tf.Rank.R2>
 };
 
-type DatasetObjectEntry = {
+export type DatasetObjectEntry = {
   classId: number,
-  data: number[],
-  shape: [number, number]
+  examples: Keypoints[]
 };
 
-type DatasetObject = DatasetObjectEntry[];
-
-async function toDatasetObject(dataset: Dataset): Promise<DatasetObject> {
-  const result: DatasetObject = await Promise.all(
-    Object.entries(dataset).map(async ([classId,value], index) => {
-      const data = await value.data();
-
-      return {
-        classId: Number(classId),
-        data: Array.from(data),
-        shape: value.shape
-      };
-   })
-  );
-
-  return result;
-};
-
-function fromDatasetObject(datasetObject: DatasetObject): Dataset {
-  return Object.entries(datasetObject).reduce((result: Dataset, [indexString, {data, shape}]) => {
-    const tensor = tf.tensor2d(data, shape);
-    const index = Number(indexString);
-
-    result[index] = tensor;
-
-    return result;
-  }, {});
-
-}
+export type DatasetObject = DatasetObjectEntry[];
 
 const storageKey = "poseClassification";
 
-type StorageEntry = {
-  dataset: DatasetObject,
-  labels: string[]
+export type StorageEntry = {
+  dataset?: DatasetObject,
+  labels?: string[]
 }
 
-export async function saveClassifierAndLabelsInLocalStorage(classifier: knnClassifier.KNNClassifier, labels: string[]) {
-  const dataset = classifier.getClassifierDataset();
-  const datasetOjb: DatasetObject = await toDatasetObject(dataset);
+export async function saveClassifierAndLabelsInLocalStorage(dataset: DatasetObject, labels: string[]) {
   const storageEntry = {
-    dataset: datasetOjb,
+    dataset,
     labels
   };
 
@@ -67,18 +37,12 @@ export async function saveClassifierAndLabelsInLocalStorage(classifier: knnClass
  * 
  * @returns the list of labels
  */
-export function loadClassifierAndLabelsFromLocalStorage(classifier: knnClassifier.KNNClassifier): string[] | null {
+export function loadClassifierLabelsFromLocalStorage(): StorageEntry {
   const storageJson = localStorage.getItem(storageKey);
 
   if (storageJson) {
-    const storageEntry = JSON.parse(storageJson) as StorageEntry;
+    return JSON.parse(storageJson) as StorageEntry;
+ }
 
-    const dataset = fromDatasetObject(storageEntry.dataset);
-
-    classifier.setClassifierDataset(dataset);
-
-    return storageEntry.labels;
-  }
-
-  return null;
+  return {};
 }

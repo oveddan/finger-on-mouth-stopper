@@ -2,13 +2,12 @@ import React, { Component } from 'react';
 import * as posenet from "@tensorflow-models/posenet";
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
-import { loadClassifierAndLabelsFromLocalStorage, saveClassifierAndLabelsInLocalStorage } from './classifierStorage';
+import { loadClassifierLabelsFromLocalStorage, saveClassifierAndLabelsInLocalStorage, DatasetObject } from './classifierStorage';
 import { Tensor2D } from '@tensorflow/tfjs';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 import Classifications, { ClassExampleCount } from './Classifications';
 import EditableClassifications from './EditableClassifications';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { chunk, deleteExample } from './util';
 
 const defaultLabels = ['withFingerOnMouth', 'coding'];
@@ -21,7 +20,7 @@ class App extends Component {
 
   state: {
     posenetModel?: posenet.PoseNet,
-    detectionModel?: cocoSsd.ObjectDetection,
+    dataset: DatasetObject,
     videoLoaded: boolean,
     classId: number,
     addingExample: number | null,
@@ -45,6 +44,7 @@ class App extends Component {
     editingClassifications: false,
     makeSound: false,
     personDetections: [],
+    dataset: [],
     videoSource: {
       liveVideo: false,
     },
@@ -53,32 +53,30 @@ class App extends Component {
 
   async componentDidMount() {
     const posenetModel = await posenet.load(1.00);
-    const detectionModel = await cocoSsd.load(); 
 
     this.loadClassifier();
 
     this.setState({
-      posenetModel,
-      detectionModel
+      posenetModel
     })
   }
 
   loadClassifier() {
-    const labels = loadClassifierAndLabelsFromLocalStorage(this.classifier);
-    const labelsToUse = !labels || labels.length === 0 ? defaultLabels : labels;
+    const { labels, dataset } = loadClassifierLabelsFromLocalStorage();
 
     this.setState({
       classExampleCount: this.classifier.getClassExampleCount(),
-      labels: labelsToUse 
-    });
+      labels,
+      dataset
+     });
   }
 
   saveClassifier = async () => {
-    await saveClassifierAndLabelsInLocalStorage(this.classifier, this.state.labels);
+    await saveClassifierAndLabelsInLocalStorage(this.state.dataset, this.state.labels);
   }
 
   estimateKeypoints = async (video: HTMLVideoElement) => {
-    if (this.state.posenetModel && this.state.detectionModel) {
+    if (this.state.posenetModel) {
       let videoTensor: tf.Tensor3D;
       try {
         videoTensor = tf.browser.fromPixels(video);
@@ -228,6 +226,10 @@ class App extends Component {
   }
 
   deleteExample = (classId: number, example: number): void => {
+    this.setState({
+      dataset: deleteExample(this.state.dataset, classId, number);
+    })
+
     deleteExample(this.classifier, classId, example);
 
     requestAnimationFrame(() => {
