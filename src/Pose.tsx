@@ -1,12 +1,14 @@
 import React from 'react'
 import * as posenet from "@tensorflow-models/posenet"
 import { connectedPartIndices } from '@tensorflow-models/posenet/dist/keypoints';
+import { mean } from './util';
 
 type PoseProps = {
   keypoints?: [number, number][],
   width: number,
   height: number,
-  boxes: [number, number, number, number][]
+  boxes: [number, number, number, number][],
+  scaleToBox?: boolean 
 }
 
 type AdjacentKeypoints = [[number, number], [number, number]][];
@@ -43,23 +45,92 @@ const boxStyle = {
 
 const faceKeypoints = [0, 1, 2, 3];
 
-const Pose = ({keypoints, width, height, boxes}: PoseProps) => {
+const POSITIVE_INFINITY = Infinity;
+const NEGATIVE_INFINITY = -Infinity;
+
+type BoundingBox = {maxX: number, maxY: number, minX: number, minY: number};
+
+function getBoundingBox(keypoints: [number, number][]): BoundingBox {
+  return keypoints.reduce(({maxX, maxY, minX, minY}, [x, y]) => {
+    return {
+      maxX: Math.max(maxX, x),
+      maxY: Math.max(maxY, y),
+      minX: Math.min(minX, x),
+      minY: Math.min(minY, y)
+    };
+  }, {
+    maxX: NEGATIVE_INFINITY,
+    maxY: NEGATIVE_INFINITY,
+    minX: POSITIVE_INFINITY,
+    minY: POSITIVE_INFINITY
+  });
+}
+
+type Tuple = [number, number];
+
+const getScale = (boundingBox: BoundingBox, [width, height]: Tuple ): Tuple => {
+  return [width/2/(boundingBox.maxX - boundingBox.minX), height/2/(boundingBox.maxY - boundingBox.minY)];
+}
+
+
+const getTranslateToCenter = (boundingBox: BoundingBox, [width, height]: Tuple): Tuple => {
+  const [centerX, centerY]= [mean([boundingBox.maxX, boundingBox.minX]), mean([boundingBox.maxY, boundingBox.minY])];
+
+  return [width/2 - centerX, height/2 - centerY];
+}
+
+const getTranslateToTopLeft = (boundingBox: BoundingBox, [width, height]: Tuple): Tuple => {
+  return [-boundingBox.minX, -boundingBox.minY];
+}
+
+const Pose = ({keypoints, width, height, boxes, scaleToBox}: PoseProps) => {
   let adjacentKeypoints: AdjacentKeypoints = [];
 
   if (keypoints)
      adjacentKeypoints = getAdjacentKeyPoints(keypoints);
 
+  let scale: [number, number];
+  let translate: [number, number];
+
+  if (scaleToBox && keypoints) {
+    const boundingBox = getBoundingBox(keypoints);
+    translate = getTranslateToTopLeft(boundingBox, [width, height]);
+    scale = getScale(boundingBox, [width, height]);
+  } else  {
+    scale = [width, height];
+    translate = [0, 0];
+  }
+
+  
+
+  const [scaleX, scaleY] = scale;
+
+  const scaleAndTranslateX = (x: number) => (x + translate[0]) * scale[0];
+  const scaleAndTranslateY = (y: number) => (y + translate[1]) * scale[1]; 
+
   return (
     <svg width={width} height={height} style={{marginBottom: '0.5rem'}}>
       <rect width={width} height={height} style={rectStyle}/>
-      {(boxes.map(([x, y, w, h])=> (
-        <rect x={x * width} y={y * height} width={w * width} height={h * height} style={boxStyle} />
+      {(boxes.map(([x, y, w, h], key)=> (
+        <rect key={key} x={x * width} y={y * height} width={w * width} height={h * height} style={boxStyle} />
       )))}
       {(keypoints && faceKeypoints.map(keypointIndex => (
-        <circle style={circleStyle} r={2} cx={keypoints[keypointIndex][0] * width} cy={keypoints[keypointIndex][1] * height} />
+        <circle 
+          key={keypointIndex} 
+          style={circleStyle} 
+          r={2} 
+          cx={scaleAndTranslateX(keypoints[keypointIndex][0])} 
+          cy={scaleAndTranslateY(keypoints[keypointIndex][1])} 
+        />
       )))}
       {(adjacentKeypoints.map(([[x1, y1], [x2, y2]], index)=> (
-        <line style={lineStyle} key={index} x1={x1 * width} y1={y1 * height} x2={x2 * width} y2={y2 * height}  />
+        <line 
+          style={lineStyle} key={index} 
+          x1={scaleAndTranslateX(x1)} 
+          y1={scaleAndTranslateY(y1)} 
+          x2={scaleAndTranslateX(x2)} 
+          y2={scaleAndTranslateY(y2)}
+        />
       )))}
     </svg>
   )

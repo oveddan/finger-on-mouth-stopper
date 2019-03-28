@@ -9,11 +9,11 @@ import VideoPlayer from './VideoPlayer';
 import Classifications, { ClassExampleCount } from './Classifications';
 import EditableClassifications from './EditableClassifications';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
+import { chunk, deleteExample } from './util';
 
 const defaultLabels = ['withFingerOnMouth', 'coding'];
 
 const fingerOnMountClass = 0;
-
 
 class App extends Component {
   endAddingExampleTimeout?: number;
@@ -217,6 +217,26 @@ class App extends Component {
     this.setState({editingClassifications: !this.state.editingClassifications});
   }
 
+  getClassificationKeypoints = async (classId: number): Promise<[number, number][][]> => {
+    const tensor = await this.classifier.getClassifierDataset()[classId];
+
+    const data = Array.from(await tensor.data()) as number[];
+
+    const chunkedToPose = chunk(data, 34).map(poseKeypoints => chunk(poseKeypoints, 2) as [number, number][]);
+
+    return chunkedToPose;
+  }
+
+  deleteExample = (classId: number, example: number): void => {
+    deleteExample(this.classifier, classId, example);
+
+    requestAnimationFrame(() => {
+      this.setState({
+        classExampleCount: this.classifier.getClassExampleCount()
+      });
+    })
+  }
+
   render() {
     const { classExampleCount, labels, keypoints, personDetections } = this.state;
     return (
@@ -236,14 +256,18 @@ class App extends Component {
               )}
             </h5>
             {this.state.editingClassifications && (
-              <EditableClassifications
-                labels={labels} 
-                classExampleCount={classExampleCount}
-                getButtonClass={this.getButtonClass}
-                addExample={this.addExample} 
-                addLabel={this.addLabel}
-                updateLabel={this.updateLabel}
-              />
+              <div>
+                <EditableClassifications
+                  labels={labels} 
+                  classExampleCount={classExampleCount}
+                  getButtonClass={this.getButtonClass}
+                  addExample={this.addExample} 
+                  addLabel={this.addLabel}
+                  updateLabel={this.updateLabel}
+                  getClassificationKeypoints={this.getClassificationKeypoints}
+                  deleteExample={this.deleteExample}
+                />
+              </div>
             )}
             {!this.state.editingClassifications && (
               <Classifications 

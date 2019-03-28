@@ -9,12 +9,14 @@
     "@tensorflow/tfjs": "^1.0.2",
     "bootstrap": "^4.3.1",
     "moment": "^2.24.0",
+    "rc-slider": "^8.6.7",
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
     "react-player": "^1.9.3",
     "react-router": "^5.0.0",
     "react-router-dom": "^5.0.0",
     "react-scripts": "2.1.8",
+    "react-svg-pan-zoom": "^3.0.3",
     "typescript": "3.3.4000"
   },
   "scripts": {
@@ -35,9 +37,11 @@
   "devDependencies": {
     "@types/moment": "^2.13.0",
     "@types/node": "11.11.6",
+    "@types/rc-slider": "^8.6.3",
     "@types/react": "16.8.8",
     "@types/react-dom": "16.8.3",
     "@types/react-router": "^4.4.5",
-    "@types/react-router-dom": "^4.3.1"
+    "@types/react-router-dom": "^4.3.1",
+    "@types/react-svg-pan-zoom": "^2.5.7"
   }
 }

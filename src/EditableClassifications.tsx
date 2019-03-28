@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import EditClassKeypoints from './EditClassKeypoints'
 
 type State = {
   editingClassId?: number,
   editingLabel?: string,
-  newLabel?: string
+  newLabel?: string,
+  keypoints?: [number, number][][]
 }
 
 type Props = {
@@ -12,6 +14,8 @@ type Props = {
   addExample: (id: number) => void,
   updateLabel: (id: number, label: string | undefined) => void,
   addLabel: (label: string) => void,
+  getClassificationKeypoints: (id: number) => Promise<[number, number][][]>, 
+  deleteExample: (id: number, exampleIndex: number) => void,
   classExampleCount: ClassExampleCount
 }
 
@@ -20,9 +24,19 @@ export type ClassExampleCount = {[classId: number]: number};
 const ENTER = 'Enter';
 const ESCAPE = 'Escape';
 
-const Classifications = ({labels, getButtonClass, addExample, classExampleCount, updateLabel, addLabel}: Props) => {
-  const [{editingClassId, editingLabel, newLabel}, setState] = useState<State>({
+const EditableClassifications = ({
+  labels, 
+  getButtonClass, 
+  addExample, 
+  classExampleCount, 
+  updateLabel, 
+  addLabel, 
+  getClassificationKeypoints,
+  deleteExample,
+}: Props) => {
+  const [state, setState] = useState<State>({
   });
+  const {keypoints, editingClassId, editingLabel, newLabel} = state;
 
   const saveLabel = async () => {
     if (typeof editingClassId !== 'undefined') {
@@ -40,14 +54,21 @@ const Classifications = ({labels, getButtonClass, addExample, classExampleCount,
     }
   } 
 
+  const setEditingClass = async (id: number, name: string) => {
+    const newKeypoints = await getClassificationKeypoints(id);
+
+    setState({...state, editingClassId: id, editingLabel: name, keypoints: newKeypoints})
+  }
+
   return (
     <div>
       {labels.map((name, id) => {
         if(editingClassId === id)
           return (
-            <input type='text' 
+            <input key={id}
+              type='text' 
               value={editingLabel} 
-              onChange={e => setState({editingClassId, editingLabel: e.target.value})} 
+              onChange={e => setState({...state, editingLabel: e.target.value})} 
               onBlur={saveLabel} 
               onKeyPress={keyPressed}
             />
@@ -55,7 +76,7 @@ const Classifications = ({labels, getButtonClass, addExample, classExampleCount,
         else
           return (
             <div key={id} className="btn-group" role="group">
-              <button type="button" className={`btn btn-light`} onClick={() => setState({editingClassId: id, editingLabel: name})}>
+              <button type="button" className={`btn btn-light`} onClick={() => setEditingClass(id, name) }>
                 <i className="far fa-edit"></i>
               </button>
               <button type="button" key={id}
@@ -79,8 +100,11 @@ const Classifications = ({labels, getButtonClass, addExample, classExampleCount,
           onKeyPress={keyPressed}
         />
       )}
+      {keypoints && typeof editingClassId !== 'undefined' && (
+        <EditClassKeypoints keypoints={keypoints} deleteExample={exampleIndex => deleteExample(editingClassId, exampleIndex)} />
+      )}
     </div>
   )
 }
 
-export default Classifications
+export default EditableClassifications

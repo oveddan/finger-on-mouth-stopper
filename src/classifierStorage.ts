@@ -55,6 +55,7 @@ export async function saveClassifierAndLabelsInLocalStorage(classifier: knnClass
     dataset: datasetOjb,
     labels
   };
+
   const jsonStr = JSON.stringify(storageEntry);
   //can be change to other source
   localStorage.setItem(storageKey, jsonStr);

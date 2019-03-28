@@ -15,7 +15,8 @@ const Classifications = ({labels, getButtonClass, addExample, classExampleCount}
       {labels.map((name, id) => (
         <button type="button" key={id}
           className={`btn ${getButtonClass(id)}`}
-          onClick={() => addExample(id)}>
+          onClick={() => addExample(id)}
+        >
           {`${name} (${classExampleCount[id] || 0})`}
         </button>
      ))}
