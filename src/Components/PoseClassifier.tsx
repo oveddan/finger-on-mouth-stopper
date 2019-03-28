@@ -2,13 +2,14 @@ import React, { Component } from 'react';
 import * as posenet from "@tensorflow-models/posenet";
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
-import { loadClassifierLabelsFromLocalStorage, saveClassifierAndLabelsInLocalStorage, DatasetObject } from './classifierStorage';
+import { loadClassifierLabelsFromLocalStorage, saveClassifierAndLabelsInLocalStorage } from '../classifierStorage';
 import { Tensor2D } from '@tensorflow/tfjs';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
-import Classifications, { ClassExampleCount } from './Classifications';
+import Classifications from './Classifications';
 import EditableClassifications from './EditableClassifications';
-import { chunk, deleteExample, addKeypointsToDataset, setClassifierExamples, updateClassExamples } from './util';
+import { chunk, deleteExample, addKeypointsToDataset, setClassifierExamples, updateClassExamples } from '../util';
+import { DatasetObject, Keypoint, Keypoints } from '../types';
 
 class App extends Component {
   endAddingExampleTimeout?: number;
@@ -284,7 +285,7 @@ class App extends Component {
 
 const estimateAndNormalizeKeypoints = async (
   posenetModel: posenet.PoseNet,
-  video: tf.Tensor3D): Promise<number[][] | undefined> => {
+  video: tf.Tensor3D): Promise<Keypoints | undefined> => {
   const poses = await posenetModel.estimateMultiplePoses(video, 1, false, 8, 1);
   if (poses.length === 0) {
     return undefined;
@@ -301,7 +302,7 @@ const estimateAndNormalizeKeypoints = async (
   //   (p.position.x - boundingBox.minX) / width, 
   //   (p.position.y - boundingBox.minY) / height
   // ]));
-  return poses[0].keypoints.map(({position: { x, y }})=> (
+  return poses[0].keypoints.map(({position: { x, y }}): [number, number] => (
     [x / width, y / height] 
   ));
 }

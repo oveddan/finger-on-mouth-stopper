@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-import { Dataset, DatasetObject } from './classifierStorage';
-import { datasetFromIteratorFn } from '@tensorflow/tfjs-data/dist/dataset';
+import React from 'react'
+import { DatasetObject } from '../types';
 
 type Props = {
   labels: string[],

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { generateSchedule, Task, Schedule } from "./scheduling";
+import { generateSchedule, Task, Schedule } from "../scheduling";
 import moment from 'moment';
 
 export default class Scheduler extends Component {

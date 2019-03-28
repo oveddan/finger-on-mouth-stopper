@@ -1,7 +1,7 @@
 import React from 'react'
 import * as posenet from "@tensorflow-models/posenet"
 import { connectedPartIndices } from '@tensorflow-models/posenet/dist/keypoints';
-import { mean } from './util';
+import { mean } from '../util';
 
 type PoseProps = {
   keypoints?: [number, number][],

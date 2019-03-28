@@ -1,6 +1,6 @@
 import { KNNClassifier } from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
-import { DatasetObject } from "./classifierStorage";
+import { DatasetObject, Keypoints } from "./types";
 
 export function chunk<T>(input: T[], chunkSize: number): T[][] {
   const result: T[][] = [];
@@ -23,14 +23,12 @@ export const deleteExample = (dataset: DatasetObject, classId: number, example: 
   return newDataset;
 }
 
-export const addKeypointsToDataset = (keypoints: number[], dataset: DatasetObject, classId: number): DatasetObject => {
+export const addKeypointsToDataset = (keypoints: Keypoints, dataset: DatasetObject, classId: number): DatasetObject => {
   const existingExample = dataset[classId] ? dataset[classId] : [];
-
-  const keypointsByPart = chunk(keypoints, 2) as [number, number][];
 
   return {
     ...dataset,
-    [classId]: [...existingExample, keypointsByPart] 
+    [classId]: [...existingExample, keypoints] 
   };
 }
 

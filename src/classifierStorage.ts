@@ -1,21 +1,8 @@
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import * as tf from '@tensorflow/tfjs';
-import { Keypoints } from "./types";
-
-export type Dataset = {
-  [classId: number]: tf.Tensor<tf.Rank.R2>
-};
-
-export type DatasetObject = {
-  [classId: number]: Keypoints[]
-};
+import { Keypoints, DatasetObject, StorageEntry } from "./types";
 
 const storageKey = "poseClassification";
-
-export type StorageEntry = {
-  dataset: DatasetObject,
-  labels: string[]
-}
 
 export async function saveClassifierAndLabelsInLocalStorage(dataset: DatasetObject, labels: string[]) {
   const storageEntry = {

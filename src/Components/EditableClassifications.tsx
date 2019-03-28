@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import EditClassKeypoints from './EditClassKeypoints'
-import { DatasetObject } from './classifierStorage';
+import { DatasetObject } from '../types';
 
 type State = {
   editingClassId?: number,
