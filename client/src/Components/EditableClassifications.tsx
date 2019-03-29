@@ -15,7 +15,7 @@ type Props = {
   addExample: (id: number) => void,
   updateLabel: (id: number, label: string | undefined) => void,
   addLabel: (label: string) => void,
-  getClassificationKeypoints: (id: number) => Promise<[number, number][][]>, 
+  getClassificationKeypoints: (id: number) => Promise<[number, number][][]>,
   deleteExample: (id: number, exampleIndex: number) => void,
   dataset: DatasetObject
 }
@@ -26,12 +26,12 @@ const ENTER = 'Enter';
 const ESCAPE = 'Escape';
 
 const EditableClassifications = ({
-  labels, 
-  getButtonClass, 
-  addExample, 
+  labels,
+  getButtonClass,
+  addExample,
   dataset,
-  updateLabel, 
-  addLabel, 
+  updateLabel,
+  addLabel,
   getClassificationKeypoints,
   deleteExample,
 }: Props) => {
@@ -41,7 +41,7 @@ const EditableClassifications = ({
 
   const saveLabel = async () => {
     if (typeof editingClassId !== 'undefined') {
-      await updateLabel(editingClassId, editingLabel); 
+      await updateLabel(editingClassId, editingLabel);
       setState({});
     } else if (newLabel) {
       await addLabel(newLabel);
@@ -53,7 +53,7 @@ const EditableClassifications = ({
     if (e.key === ENTER) {
       saveLabel();
     }
-  } 
+  }
 
   const setEditingClass = async (id: number, name: string) => {
     const newKeypoints = await getClassificationKeypoints(id);
@@ -67,10 +67,10 @@ const EditableClassifications = ({
         if(editingClassId === id)
           return (
             <input key={id}
-              type='text' 
-              value={editingLabel} 
-              onChange={e => setState({...state, editingLabel: e.target.value})} 
-              onBlur={saveLabel} 
+              type='text'
+              value={editingLabel}
+              onChange={e => setState({...state, editingLabel: e.target.value})}
+              onBlur={saveLabel}
               onKeyPress={keyPressed}
             />
           )
@@ -95,16 +95,16 @@ const EditableClassifications = ({
         </button>
       )}
       {newLabel && (
-        <input type='text' 
-          value={newLabel} 
-          onChange={e => setState({newLabel: e.target.value})} 
+        <input type='text'
+          value={newLabel}
+          onChange={e => setState({newLabel: e.target.value})}
           onKeyPress={keyPressed}
         />
       )}
       {keypoints && typeof editingClassId !== 'undefined' && (
-        <EditClassKeypoints 
-          keypoints={keypoints} 
-          deleteExample={exampleIndex => deleteExample(editingClassId, exampleIndex)} 
+        <EditClassKeypoints
+          keypoints={keypoints}
+          deleteExample={exampleIndex => deleteExample(editingClassId, exampleIndex)}
         />
       )}
     </div>

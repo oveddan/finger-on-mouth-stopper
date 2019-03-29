@@ -1,0 +1,22 @@
+{
+  "name": "pose-classifier",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oveddan/finger-on-mouth-stopper.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/oveddan/finger-on-mouth-stopper/issues"
+  },
+  "homepage": "https://github.com/oveddan/finger-on-mouth-stopper#readme",
+  "devDependencies": {
+    "clang-format": "^1.2.4"
+  }
+}

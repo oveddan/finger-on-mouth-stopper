@@ -1,0 +1,25 @@
+{
+  "name": "video-relayer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "ws": "^6.2.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^6.0.1",
+    "clang-format": "^1.2.4",
+    "concurrently": "^4.1.0",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.4000"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "server": "node dist/index.js",
+    "serve": "node ./dist/index.js",
+    "start": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch\" \"npm run serve\""
+  },
+  "author": "",
+  "license": "ISC"
+}

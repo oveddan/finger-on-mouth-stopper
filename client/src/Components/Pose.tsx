@@ -91,7 +91,7 @@ const Pose = ({keypoints, width, height, boxes}: PoseProps) => {
   const scale = [width, height];;
 
   const scaleX = (x: number) => x * scale[0];
-  const scaleY = (y: number) => y * scale[1]; 
+  const scaleY = (y: number) => y * scale[1];
 
   return (
     <svg width={width} height={height} style={{marginBottom: '0.5rem'}}>
@@ -100,20 +100,20 @@ const Pose = ({keypoints, width, height, boxes}: PoseProps) => {
         <rect key={key} x={x * width} y={y * height} width={w * width} height={h * height} style={boxStyle} />
       )))}
       {(keypoints && faceKeypoints.map(keypointIndex => (
-        <circle 
-          key={keypointIndex} 
-          style={circleStyle} 
-          r={2} 
-          cx={scaleX(keypoints[keypointIndex][0])} 
-          cy={scaleY(keypoints[keypointIndex][1])} 
+        <circle
+          key={keypointIndex}
+          style={circleStyle}
+          r={2}
+          cx={scaleX(keypoints[keypointIndex][0])}
+          cy={scaleY(keypoints[keypointIndex][1])}
         />
       )))}
       {(adjacentKeypoints.map(([[x1, y1], [x2, y2]], index)=> (
-        <line 
-          style={lineStyle} key={index} 
-          x1={scaleX(x1)} 
-          y1={scaleY(y1)} 
-          x2={scaleX(x2)} 
+        <line
+          style={lineStyle} key={index}
+          x1={scaleX(x1)}
+          y1={scaleY(y1)}
+          x2={scaleX(x2)}
           y2={scaleY(y2)}
         />
       )))}
