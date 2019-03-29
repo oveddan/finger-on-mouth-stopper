@@ -102,7 +102,10 @@ const EditableClassifications = ({
         />
       )}
       {keypoints && typeof editingClassId !== 'undefined' && (
-        <EditClassKeypoints keypoints={keypoints} deleteExample={exampleIndex => deleteExample(editingClassId, exampleIndex)} />
+        <EditClassKeypoints 
+          keypoints={keypoints} 
+          deleteExample={exampleIndex => deleteExample(editingClassId, exampleIndex)} 
+        />
       )}
     </div>
   )

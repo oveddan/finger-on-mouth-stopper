@@ -14,11 +14,16 @@ export function chunk<T>(input: T[], chunkSize: number): T[][] {
 }
 
 export const deleteExample = (dataset: DatasetObject, classId: number, example: number): DatasetObject => {
-  const newDataset = {
-    ...dataset
-  };
+  const existingExamples = dataset[classId];
+  const newExamples = [
+    ...existingExamples.slice(0, example),
+    ...existingExamples.slice(example + 1, existingExamples.length)
+  ];
 
-  delete newDataset[classId];
+  const newDataset = {
+    ...dataset,
+    [classId]: newExamples
+  };
 
   return newDataset;
 }
@@ -32,7 +37,7 @@ export const addKeypointsToDataset = (keypoints: Keypoints, dataset: DatasetObje
   };
 }
 
-const toExample = (keypoints: [number, number][]) => tf.tensor2d(keypoints);
+export const toExample = (keypoints: [number, number][]) => tf.tensor2d(keypoints);
 
 export const updateClassExamples = (classifier: KNNClassifier, dataset: DatasetObject, classId: number) => {
   const keypoints = dataset[classId];

@@ -7,8 +7,7 @@ type PoseProps = {
   keypoints?: [number, number][],
   width: number,
   height: number,
-  boxes: [number, number, number, number][],
-  scaleToBox?: boolean 
+  boxes: [number, number, number, number][]
 }
 
 type AdjacentKeypoints = [[number, number], [number, number]][];
@@ -83,30 +82,16 @@ const getTranslateToTopLeft = (boundingBox: BoundingBox, [width, height]: Tuple)
   return [-boundingBox.minX, -boundingBox.minY];
 }
 
-const Pose = ({keypoints, width, height, boxes, scaleToBox}: PoseProps) => {
+const Pose = ({keypoints, width, height, boxes}: PoseProps) => {
   let adjacentKeypoints: AdjacentKeypoints = [];
 
   if (keypoints)
      adjacentKeypoints = getAdjacentKeyPoints(keypoints);
 
-  let scale: [number, number];
-  let translate: [number, number];
+  const scale = [width, height];;
 
-  if (scaleToBox && keypoints) {
-    const boundingBox = getBoundingBox(keypoints);
-    translate = getTranslateToTopLeft(boundingBox, [width, height]);
-    scale = getScale(boundingBox, [width, height]);
-  } else  {
-    scale = [width, height];
-    translate = [0, 0];
-  }
-
-  
-
-  const [scaleX, scaleY] = scale;
-
-  const scaleAndTranslateX = (x: number) => (x + translate[0]) * scale[0];
-  const scaleAndTranslateY = (y: number) => (y + translate[1]) * scale[1]; 
+  const scaleX = (x: number) => x * scale[0];
+  const scaleY = (y: number) => y * scale[1]; 
 
   return (
     <svg width={width} height={height} style={{marginBottom: '0.5rem'}}>
@@ -119,17 +104,17 @@ const Pose = ({keypoints, width, height, boxes, scaleToBox}: PoseProps) => {
           key={keypointIndex} 
           style={circleStyle} 
           r={2} 
-          cx={scaleAndTranslateX(keypoints[keypointIndex][0])} 
-          cy={scaleAndTranslateY(keypoints[keypointIndex][1])} 
+          cx={scaleX(keypoints[keypointIndex][0])} 
+          cy={scaleY(keypoints[keypointIndex][1])} 
         />
       )))}
       {(adjacentKeypoints.map(([[x1, y1], [x2, y2]], index)=> (
         <line 
           style={lineStyle} key={index} 
-          x1={scaleAndTranslateX(x1)} 
-          y1={scaleAndTranslateY(y1)} 
-          x2={scaleAndTranslateX(x2)} 
-          y2={scaleAndTranslateY(y2)}
+          x1={scaleX(x1)} 
+          y1={scaleY(y1)} 
+          x2={scaleX(x2)} 
+          y2={scaleY(y2)}
         />
       )))}
     </svg>

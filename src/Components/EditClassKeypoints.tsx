@@ -23,7 +23,7 @@ const EditClassKeypoints = ({keypoints, deleteExample}: Props) => {
 
   return (
     <div>
-      <Pose keypoints={exampleKeypoints} scaleToBox width={200} height={200} boxes={[]}/>
+      <Pose keypoints={exampleKeypoints} width={200} height={200} boxes={[]}/>
       <button className="btn btn-secondary" onClick={() => deleteExample(example)}>Remove Example</button>
       <Slider value={example} min={0} max={keypoints.length-1} step={1} onChange={value => setState({example: value})} />
     </div>

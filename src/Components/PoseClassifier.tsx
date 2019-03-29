@@ -8,10 +8,10 @@ import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 import Classifications from './Classifications';
 import EditableClassifications from './EditableClassifications';
-import { chunk, deleteExample, addKeypointsToDataset, setClassifierExamples, updateClassExamples } from '../util';
+import { chunk, deleteExample, addKeypointsToDataset, setClassifierExamples, updateClassExamples, toExample } from '../util';
 import { DatasetObject, Keypoint, Keypoints } from '../types';
 
-class App extends Component {
+class PoseClassifier extends Component {
   endAddingExampleTimeout?: number;
   classifier: knnClassifier.KNNClassifier = knnClassifier.create();
 
@@ -45,9 +45,9 @@ class App extends Component {
   };
 
   async componentDidMount() {
-    const posenetModel = await posenet.load(1.00);
-
     this.loadData();
+
+    const posenetModel = await posenet.load(1.00);
 
     this.setState({
       posenetModel
@@ -70,7 +70,7 @@ class App extends Component {
     await saveClassifierAndLabelsInLocalStorage(this.state.dataset, this.state.labels);
   }
 
-  addExample = async (classId: number) => {
+  addExample = (classId: number) => {
     if (this.endAddingExampleTimeout) {
       window.clearTimeout(this.endAddingExampleTimeout);
     }
@@ -79,13 +79,11 @@ class App extends Component {
       addingExample: classId
     });
 
-    const keypointsTensor = this.getKeypointsTensor();
+    const { keypoints } = this.state;
 
-    if (keypointsTensor) {
-      const keypoints = await keypointsTensor.data();
-
+    if (keypoints) {
       this.setState({
-        dataset: addKeypointsToDataset(Array.from(keypoints), this.state.dataset, classId)
+        dataset: addKeypointsToDataset(keypoints, this.state.dataset, classId)
       }, () => {
         updateClassExamples(this.classifier, this.state.dataset, classId);
 
@@ -165,10 +163,11 @@ class App extends Component {
   classify = async() => {
     if (Object.keys(this.state.dataset).length === 0) return;
 
-    const keypointsTensor = this.getKeypointsTensor();
+    const { keypoints } = this.state;
 
-    if (!keypointsTensor)
-      return;
+    if (!keypoints) return;
+
+    const keypointsTensor = toExample(keypoints);
 
     const prediction = await this.classifier.predictClass(keypointsTensor);
 
@@ -202,13 +201,6 @@ class App extends Component {
     };
 
     return "btn-light";
-  }
-
-  getKeypointsTensor(): Tensor2D | undefined {
-    if (!this.state.keypoints)
-      return undefined;
-
-    return tf.tensor2d(this.state.keypoints);
   }
 
   frameChanged = this.estimateKeypoints
@@ -249,7 +241,7 @@ class App extends Component {
               <div>
                 <EditableClassifications
                   labels={labels} 
-                  dataset={this.state.dataset}
+                  dataset={dataset}
                   getButtonClass={this.getButtonClass}
                   addExample={this.addExample} 
                   addLabel={this.addLabel}
@@ -262,7 +254,7 @@ class App extends Component {
             {!this.state.editingClassifications && (
               <Classifications 
                 labels={labels} 
-                dataset={this.state.dataset}
+                dataset={dataset}
                 getButtonClass={this.getButtonClass}
                 addExample={this.addExample} 
               />
@@ -323,4 +315,4 @@ const Header = () => (
   </div>
 )
 
-export default App;
+export default PoseClassifier;
