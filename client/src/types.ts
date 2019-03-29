@@ -1,4 +1,4 @@
-import { Tensor2D } from '@tensorflow/tfjs';
+import {Tensor2D} from '@tensorflow/tfjs';
 
 export type Keypoint = [number, number];
 export type Keypoints = Keypoint[];
@@ -14,5 +14,10 @@ export type DatasetObject = {
 export type StorageEntry = {
   dataset: DatasetObject,
   labels: string[]
-}
+};
 
+export type State = {
+  dataset: DatasetObject,
+  labels: string[],
+  keypoints?: Keypoints
+};

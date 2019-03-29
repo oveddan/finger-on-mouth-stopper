@@ -12,8 +12,7 @@ type State = {
 type Props = {
   labels: string[],
   getButtonClass: (id: number) => string,
-  addExample: (id: number) => void,
-  updateLabel: (id: number, label: string | undefined) => void,
+  updateLabel: (id: number, label: string) => void,
   addLabel: (label: string) => void,
   getClassificationKeypoints: (id: number) => Promise<[number, number][][]>,
   deleteExample: (id: number, exampleIndex: number) => void,
@@ -28,7 +27,6 @@ const ESCAPE = 'Escape';
 const EditableClassifications = ({
   labels,
   getButtonClass,
-  addExample,
   dataset,
   updateLabel,
   addLabel,
@@ -41,7 +39,7 @@ const EditableClassifications = ({
 
   const saveLabel = async () => {
     if (typeof editingClassId !== 'undefined') {
-      await updateLabel(editingClassId, editingLabel);
+      await updateLabel(editingClassId, editingLabel as string);
       setState({});
     } else if (newLabel) {
       await addLabel(newLabel);
@@ -77,12 +75,9 @@ const EditableClassifications = ({
         else
           return (
             <div key={id} className="btn-group" role="group">
-              <button type="button" className={`btn btn-light`} onClick={() => setEditingClass(id, name) }>
-                <i className="far fa-edit"></i>
-              </button>
               <button type="button" key={id}
                 className={`btn ${getButtonClass(id)}`}
-                onClick={() => addExample(id)} >
+                onClick={() => setEditingClass(id, name)} >
                 {`${name} (${dataset[id] ? dataset[id].length : 0})`}
               </button>
             </div>
