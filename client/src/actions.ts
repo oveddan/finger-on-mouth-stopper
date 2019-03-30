@@ -1,7 +1,7 @@
 import {action, ActionType} from 'typesafe-actions';
 
 import {ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
-import {Activities, DatasetObject, Keypoints} from './types';
+import {DatasetObject, Keypoints, Labels} from './types';
 // interface AddExampleAction {
 //   type: typeof ADD_EXAMPLE, classId: number
 // }
@@ -39,7 +39,7 @@ export const addExample = (classId: number) => action(ADD_EXAMPLE, classId);
 export const deleteExample = (classId: number, example: number) =>
     action(DELETE_EXAMPLE, {classId, example});
 
-export const setDataset = (dataset: DatasetObject, activities: Activities) =>
+export const setDataset = (dataset: DatasetObject, activities: Labels) =>
     action(SET_DATASET, {dataset, activities});
 
 export const clearDataset = () => action(CLEAR_DATASET);
@@ -53,9 +53,9 @@ export const keypointsEstimated = (keypoints: Keypoints) =>
     action(KEYPOINTS_ESTIMATED, keypoints);
 
 const actions = {
-  addExample: typeof addExample,
-  deleteExample: typeof deleteExample,
-  setDataset: typeof setDataset,
+  addExample,
+  deleteExample,
+  setDataset,
   clearDataset,
   addLabel,
   updateLabel,

@@ -1,18 +1,18 @@
 import React, { useState } from 'react'
-import EditClassKeypoints from './EditClassKeypoints'
-import { DatasetObject, Activities } from '../types';
-import { activationOptions } from '@tensorflow/tfjs-layers/dist/keras_format/activation_config';
-import * as actions from '../actions';
+import EditClassKeypoints from './EditClassKeypoints';
+import { Keypoints, DatasetObject, Labels } from '../types';
 
 type State = {
   editingClassId?: number,
-  keypoints?: [number, number][][]
+  editingLabel?: string,
+  newLabel?: string
 }
 
 type Props = {
-  activities: Activities,
+  labels: Labels,
   getButtonClass: (id: number) => string,
-  getClassificationKeypoints: (id: number) => Promise<[number, number][][]>,
+  updateLabel: (id: number, label: string) => void,
+  addLabel: (label: string) => void,
   deleteExample: (classId: number, example: number) => void,
   dataset: DatasetObject
 }
@@ -20,39 +20,71 @@ type Props = {
 export type ClassExampleCount = {[classId: number]: number};
 
 const ENTER = 'Enter';
-const ESCAPE = 'Escape';
 
-const EditableClassifications = ({
-  activities,
-  getButtonClass,
-  dataset,
-  getClassificationKeypoints,
-  deleteExample,
-}: Props) => {
-  const [state, setState] = useState<State>({
+const EditableClassifications = ({labels, getButtonClass, dataset, updateLabel, addLabel, deleteExample}: Props) => {
+  const [{editingClassId, editingLabel, newLabel}, setState] = useState<State>({
   });
-  const {keypoints, editingClassId} = state;
 
-  const setEditingClass = async (id: number, name: string) => {
-    const newKeypoints = await getClassificationKeypoints(id);
+  const keypoints = typeof editingClassId !== 'undefined' ? dataset[editingClassId] : null;
 
-    setState({...state, editingClassId: id, keypoints: newKeypoints})
+  const saveLabel = async () => {
+    if (typeof editingClassId !== 'undefined') {
+      await updateLabel(editingClassId, editingLabel as string);
+      setState({});
+    } else if (newLabel) {
+      await addLabel(newLabel);
+      setState({});
+    }
+  }
+
+  const keyPressed = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === ENTER) {
+      saveLabel();
+    }
   }
 
   return (
     <div>
-      {Object.entries(activities).map(([name, id]) => (
-        <div key={id} className="btn-group" role="group">
-          <button type="button" key={id}
-            className={`btn ${getButtonClass(+id)}`}
-            onClick={() => setEditingClass(+id, name)} >
-            {`${name} (${dataset[+id] ? dataset[+id].length : 0})`}
-          </button>
-        </div>
-      ))}
+      {Object.keys(labels).map(idString => {
+        const id = +idString;
+        const name = labels[id];
+        if(editingClassId === id && editingLabel)
+          return (
+            <input type='text'
+              value={editingLabel}
+              onChange={e => setState({editingClassId, editingLabel: e.target.value})}
+              onBlur={saveLabel}
+              onKeyPress={keyPressed}
+            />
+          )
+        else
+          return (
+            <div key={id} className="btn-group" role="group">
+              <button type="button" className={`btn btn-light`} onClick={() => setState({editingClassId: id, editingLabel: name})}>
+                <i className="far fa-edit"></i>
+              </button>
+              <button type="button" key={id}
+                className={`btn ${getButtonClass(id)}`}
+                onClick={() => setState({editingClassId: id})} >
+                {`${name} (${dataset[id] ? dataset[id].length : 0})`}
+              </button>
+            </div>
+         )
+      })}
       <br/>
-
-     {keypoints && typeof editingClassId !== 'undefined' && (
+      {!newLabel && (
+        <button type="button" className="btn btn-light" onClick={() => setState({newLabel: 'label'})}>
+          <i className="fas fa-plus"></i>
+        </button>
+      )}
+      {newLabel && (
+        <input type='text'
+          value={newLabel}
+          onChange={e => setState({newLabel: e.target.value})}
+          onKeyPress={keyPressed}
+        />
+      )}
+      {keypoints && typeof editingClassId !== 'undefined' && (
         <EditClassKeypoints
           keypoints={keypoints}
           deleteExample={exampleIndex => deleteExample(editingClassId, exampleIndex)}
@@ -63,3 +95,5 @@ const EditableClassifications = ({
 }
 
 export default EditableClassifications
+
+

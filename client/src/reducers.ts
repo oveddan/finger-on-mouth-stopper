@@ -2,18 +2,18 @@ import {action, ActionType, StateType} from 'typesafe-actions';
 
 import * as actions from './actions';
 import {ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
-import {Activities, DatasetObject, Keypoints} from './types';
+import {DatasetObject, Keypoints, Labels} from './types';
 import {addKeypointsToDataset, deleteExample} from './util';
 
 export type State = {
   readonly dataset: DatasetObject,
-  readonly activities: Activities,
+  readonly labels: Labels,
   readonly keypoints?: Keypoints
 };
 
 const initialState: State = {
   dataset: {},
-  activities: {},
+  labels: {},
 };
 
 export type Actions = ActionType<typeof actions>;
@@ -23,12 +23,12 @@ export type RootAction = ActionType<typeof actions>;
 const max = (values: number[]) =>
     values.reduce((result, value) => Math.max(value, result), 0);
 
-const nextActivityId = (activities: Activities) =>
-    max(Object.keys(activities).map(x => +x));
+const nextActivityId = (activities: Labels) =>
+    max(Object.keys(activities).map(x => +x)) + 1;
 
 const reducer = (state = initialState, action: Actions):
     State => {
-      const {keypoints, dataset, activities} = state;
+      const {keypoints, dataset, labels} = state;
 
       switch (action.type) {
         case ADD_EXAMPLE:
@@ -47,22 +47,21 @@ const reducer = (state = initialState, action: Actions):
         case SET_DATASET:
           return {
             ...state, dataset: action.payload.dataset,
-                activities: action.payload.activities
+                labels: action.payload.activities
           }
         case CLEAR_DATASET:
           return {
             ...state, dataset: {}
           }
         case ADD_LABEL:
-          const newId = nextActivityId(activities);
+          const newId = nextActivityId(labels);
           return {
-            ...state, activities: {...activities, [newId]: action.payload}
+            ...state, labels: {...labels, [newId]: action.payload}
           }
         case UPDATE_LABEL:
           return {
             ...state,
-            activities:
-                {...activities, [action.payload.id]: action.payload.text}
+            labels: {...labels, [action.payload.id]: action.payload.text}
           };
         case KEYPOINTS_ESTIMATED:
           return {...state, keypoints: action.payload};

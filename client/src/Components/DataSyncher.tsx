@@ -1,15 +1,17 @@
 import { Component } from "react";
-import { DatasetObject, State, Activities } from "../types";
+import { DatasetObject, Labels } from "../types";
 import { connect } from 'react-redux';
 import { Dispatch } from "redux";
 import * as actions from "../actions";
 import { saveClassifierAndLabelsInLocalStorage, loadClassifierLabelsFromLocalStorage } from "../classifierStorage";
 import { KNNClassifier } from "@tensorflow-models/knn-classifier";
 import { setClassifierExamples } from "../util";
+import { Action } from "../actions";
+import { State } from "../reducers";
 
 type DataSyncerProps = {
   dataset: DatasetObject,
-  activities: Activities,
+  labels: Labels,
   setDataset: typeof actions.setDataset,
   clearDataset: typeof actions.clearDataset,
   classifier: KNNClassifier
@@ -27,9 +29,9 @@ class DataSyncer extends Component<DataSyncerProps> {
   }
 
   componentDidUpdate(prevProps: DataSyncerProps) {
-    const { dataset, activities } = this.props;
-    if (prevProps.dataset !== dataset || prevProps.activities !== activities) {
-      saveClassifierAndLabelsInLocalStorage(dataset, activities);
+    const { dataset, labels} = this.props;
+    if (prevProps.dataset !== dataset || prevProps.labels !== labels) {
+      saveClassifierAndLabelsInLocalStorage(dataset, labels);
     }
   }
 
@@ -38,13 +40,13 @@ class DataSyncer extends Component<DataSyncerProps> {
   }
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<actions.ActionTypes>) => ({
-  setDataset: (dataset: DatasetObject, activities: Activities) => dispatch(actions.setDataset(dataset, activities)),
+const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
+  setDataset: (dataset: DatasetObject, activities: Labels) => dispatch(actions.setDataset(dataset, activities)),
   clearDataset: () => dispatch(actions.clearDataset())
 })
 
-const mapStateToProps = ({dataset, activities}: State) => ({
-  dataset, activities
+const mapStateToProps = ({dataset, labels}: State) => ({
+  dataset, labels
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(DataSyncer);
