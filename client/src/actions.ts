@@ -2,37 +2,6 @@ import {action, ActionType} from 'typesafe-actions';
 
 import {ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
 import {DatasetObject, Keypoints, Labels} from './types';
-// interface AddExampleAction {
-//   type: typeof ADD_EXAMPLE, classId: number
-// }
-
-// interface DeleteExampleAction {
-//   type: typeof DELETE_EXAMPLE, classId: number, example: number
-// }
-
-// interface SetDatsetAction {
-//   type: typeof SET_DATASET, dataset: DatasetObject, activities: Activities
-// }
-
-// interface ClearDatasetAction {
-//   type: typeof CLEAR_DATASET
-// }
-
-// interface AddLabelAction {
-//   type: typeof ADD_LABEL, text: string
-// }
-
-// interface UpdateLabelAction {
-//   type: typeof UPDATE_LABEL, id: number, text: string
-// }
-
-// interface KeypointsEstimatedAction {
-//   type: typeof KEYPOINTS_ESTIMATED, keypoints: Keypoints
-// }
-
-// export type ActionTypes =
-//     AddExampleAction|DeleteExampleAction|SetDatsetAction|ClearDatasetAction|
-//     AddLabelAction|UpdateLabelAction|KeypointsEstimatedAction;
 
 export const addExample = (classId: number) => action(ADD_EXAMPLE, classId);
 

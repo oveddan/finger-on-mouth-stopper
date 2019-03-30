@@ -100,13 +100,14 @@ class PoseClassifier extends Component<PoseClassifierProps> {
 
   }
 
-  estimateKeypoints = async (video: HTMLVideoElement) => {
+  estimateKeypoints = async (video: HTMLVideoElement | HTMLImageElement) => {
     if (this.state.posenetModel) {
       let videoTensor: tf.Tensor3D;
       try {
         videoTensor = tf.browser.fromPixels(video);
       } catch(e) {
         console.error('could not load video');
+        console.error(e);
         return;
       }
 
