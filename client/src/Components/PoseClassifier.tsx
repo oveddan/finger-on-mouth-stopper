@@ -8,22 +8,25 @@ import VideoPlayer from './VideoPlayer';
 import Classifications from './Classifications';
 import EditableClassifications from './EditableClassifications';
 import { chunk, setClassifierExamples, updateClassExamples, toExample } from '../util';
-import { DatasetObject, Keypoint, Keypoints, State } from '../types';
+import { DatasetObject, Keypoint, Keypoints, Activities } from '../types';
 import { connect } from 'react-redux';
 import * as actions from '../actions';
 import DataSyncher from './DataSyncher';
 import { create, KNNClassifier } from '@tensorflow-models/knn-classifier';
+import { bindActionCreators } from 'redux';
+import { Actions } from '../reducers';
+import { Action } from '../actions';
 
 interface PoseClassifierProps {
   dataset: DatasetObject,
-  labels: string[],
+  activities: Activities,
   keypoints?: Keypoints,
-  addExample: (classId: number) => void,
-  deleteExample: (classId: number, exampleId: number) => void,
   clearDataset: () => void,
   addLabel: (text: string) => void,
   updateLabel: (id: number, text: string) => void,
   keypointsEstimated: (keypoints: Keypoints) => void
+  addExample: typeof actions.addExample,
+  deleteExample: typeof actions.deleteExample,
 };
 
 class PoseClassifier extends Component<PoseClassifierProps> {
@@ -152,7 +155,7 @@ class PoseClassifier extends Component<PoseClassifierProps> {
   }
 
   render() {
-    const { dataset, labels, keypoints } = this.props;
+    const { dataset, activities, keypoints } = this.props;
     return (
       <div>
         <h1>Pose Classifier</h1>
@@ -172,11 +175,9 @@ class PoseClassifier extends Component<PoseClassifierProps> {
             {this.state.editingClassifications && (
               <div>
                 <EditableClassifications
-                  labels={labels}
+                  activities={activities}
                   dataset={dataset}
                   getButtonClass={this.getButtonClass}
-                  addLabel={this.props.addLabel}
-                  updateLabel={this.props.updateLabel}
                   getClassificationKeypoints={this.getClassificationKeypoints}
                   deleteExample={this.deleteExample}
                 />
@@ -184,7 +185,7 @@ class PoseClassifier extends Component<PoseClassifierProps> {
             )}
             {!this.state.editingClassifications && (
               <Classifications
-                labels={labels}
+                activities={activities}
                 dataset={dataset}
                 getButtonClass={this.getButtonClass}
                 addExample={this.addExample}
@@ -263,18 +264,26 @@ const classify = async(classifier: KNNClassifier, dataset: DatasetObject, keypoi
 
 
 
-const mapStateToProps = ({dataset, labels, keypoints}: State) => ({
-  dataset, labels, keypoints
+const mapStateToProps = ({dataset, activities, keypoints}: State) => ({
+  dataset, activities, keypoints
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<actions.ActionTypes>) => ({
-  addExample: (classId: number) => dispatch(actions.addExample(classId)),
-  deleteExample: (classId: number, exampleId: number) => dispatch(actions.deleteExample(classId, exampleId)),
-  clearDataset: () => dispatch(actions.clearDataset()),
-  addLabel: (text: string) => dispatch(actions.addLabel(text)),
-  updateLabel: (id: number, text: string) => dispatch(actions.updateLabel(id, text)),
-  keypointsEstimated: (keypoints: Keypoints) => dispatch(actions.keypointsEstimated(keypoints))
-});
+// const mapDispatchToProps = (dispatch: Dispatch<actions.ActionTypes>) => (
+//   bindActionCreators({
+//     addExample: actions.addExample
+//   }, dispatch)
+// );
+const mapDispatchToProps = (dispatch: Dispatch<Action>) =>
+  bindActionCreators({
+    addExample: actions.addExample
+  },
+  dispatch);
+//   deleteExample: (classId: number, exampleId: number) => dispatch(actions.deleteExample(classId, exampleId)),
+//   clearDataset: () => dispatch(actions.clearDataset()),
+//   addLabel: (text: string) => dispatch(actions.addLabel(text)),
+//   updateLabel: (id: number, text: string) => dispatch(actions.updateLabel(id, text)),
+//   keypointsEstimated: (keypoints: Keypoints) => dispatch(actions.keypointsEstimated(keypoints))
+// });
 
 
 export default connect(mapStateToProps, mapDispatchToProps)(PoseClassifier);

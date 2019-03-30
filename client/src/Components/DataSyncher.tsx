@@ -1,33 +1,35 @@
 import { Component } from "react";
-import { DatasetObject, State } from "../types";
+import { DatasetObject, State, Activities } from "../types";
 import { connect } from 'react-redux';
 import { Dispatch } from "redux";
 import * as actions from "../actions";
 import { saveClassifierAndLabelsInLocalStorage, loadClassifierLabelsFromLocalStorage } from "../classifierStorage";
-import { data } from "@tensorflow/tfjs";
 import { KNNClassifier } from "@tensorflow-models/knn-classifier";
 import { setClassifierExamples } from "../util";
 
 type DataSyncerProps = {
   dataset: DatasetObject,
-  labels: string[],
+  activities: Activities,
   setDataset: typeof actions.setDataset,
+  clearDataset: typeof actions.clearDataset,
   classifier: KNNClassifier
 }
 
 class DataSyncer extends Component<DataSyncerProps> {
   componentDidMount() {
-    const { labels, dataset } = loadClassifierLabelsFromLocalStorage();
+    const { activities, dataset } = loadClassifierLabelsFromLocalStorage();
+    if (activities && dataset) {
 
-    this.props.setDataset(dataset, labels);
+      this.props.setDataset(dataset, activities);
 
-    setClassifierExamples(this.props.classifier, dataset);
+      setClassifierExamples(this.props.classifier, dataset);
+    }
   }
 
   componentDidUpdate(prevProps: DataSyncerProps) {
-    const { dataset, labels } = this.props;
-    if (prevProps.dataset !== dataset || prevProps.labels !== labels) {
-      saveClassifierAndLabelsInLocalStorage(dataset, labels);
+    const { dataset, activities } = this.props;
+    if (prevProps.dataset !== dataset || prevProps.activities !== activities) {
+      saveClassifierAndLabelsInLocalStorage(dataset, activities);
     }
   }
 
@@ -37,12 +39,12 @@ class DataSyncer extends Component<DataSyncerProps> {
 }
 
 const mapDispatchToProps = (dispatch: Dispatch<actions.ActionTypes>) => ({
-  setDataset: (dataset: DatasetObject, labels: string[]) => dispatch(actions.setDataset(dataset, labels)),
+  setDataset: (dataset: DatasetObject, activities: Activities) => dispatch(actions.setDataset(dataset, activities)),
   clearDataset: () => dispatch(actions.clearDataset())
 })
 
-const mapStateToProps = ({dataset, labels}: State) => ({
-  dataset, labels
+const mapStateToProps = ({dataset, activities}: State) => ({
+  dataset, activities
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(DataSyncer);

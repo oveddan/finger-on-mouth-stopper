@@ -11,13 +11,19 @@ export type DatasetObject = {
   [classId: number]: Keypoints[]
 };
 
-export type StorageEntry = {
-  dataset: DatasetObject,
-  labels: string[]
+export type Activities = {
+  [id: number]: string
 };
 
 export type State = {
-  dataset: DatasetObject,
-  labels: string[],
-  keypoints?: Keypoints
+  readonly dataset: DatasetObject,
+  readonly activities: Activities,
+  readonly keypoints?: Keypoints
 };
+
+export type StorageEntry = {
+  dataset: DatasetObject,
+  activities: Activities
+};
+
+import {StateType, ActionType} from 'typesafe-actions';

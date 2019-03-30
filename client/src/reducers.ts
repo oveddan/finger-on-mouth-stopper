@@ -1,15 +1,34 @@
-import {ActionTypes, ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './actions';
-import {State} from './types';
+import {action, ActionType, StateType} from 'typesafe-actions';
+
+import * as actions from './actions';
+import {ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
+import {Activities, DatasetObject, Keypoints} from './types';
 import {addKeypointsToDataset, deleteExample} from './util';
+
+export type State = {
+  readonly dataset: DatasetObject,
+  readonly activities: Activities,
+  readonly keypoints?: Keypoints
+};
 
 const initialState: State = {
   dataset: {},
-  labels: [],
+  activities: {},
 };
 
-const reducer = (state = initialState, action: ActionTypes):
+export type Actions = ActionType<typeof actions>;
+
+export type RootAction = ActionType<typeof actions>;
+
+const max = (values: number[]) =>
+    values.reduce((result, value) => Math.max(value, result), 0);
+
+const nextActivityId = (activities: Activities) =>
+    max(Object.keys(activities).map(x => +x));
+
+const reducer = (state = initialState, action: Actions):
     State => {
-      const {keypoints, dataset, labels} = state;
+      const {keypoints, dataset, activities} = state;
 
       switch (action.type) {
         case ADD_EXAMPLE:
@@ -17,37 +36,42 @@ const reducer = (state = initialState, action: ActionTypes):
           return {
             ...state,
                 dataset:
-                    addKeypointsToDataset(keypoints, dataset, action.classId)
+                    addKeypointsToDataset(keypoints, dataset, action.payload)
           }
         case DELETE_EXAMPLE:
           return {
             ...state,
-                dataset: deleteExample(dataset, action.classId, action.example)
+                dataset: deleteExample(
+                    dataset, action.payload.classId, action.payload.example)
           }
         case SET_DATASET:
           return {
-            ...state, dataset: action.dataset, labels: action.labels
+            ...state, dataset: action.payload.dataset,
+                activities: action.payload.activities
           }
         case CLEAR_DATASET:
           return {
-            ...state, dataset: {}, labels: []
+            ...state, dataset: {}
           }
         case ADD_LABEL:
-          const newLabels = labels.slice(0);
-          newLabels.push(action.text);
+          const newId = nextActivityId(activities);
           return {
-            ...state, labels: newLabels
+            ...state, activities: {...activities, [newId]: action.payload}
           }
         case UPDATE_LABEL:
-          const newLabelsB = labels.slice(0);
-          newLabelsB[action.id] = action.text;
-          return {...state, labels: newLabelsB};
+          return {
+            ...state,
+            activities:
+                {...activities, [action.payload.id]: action.payload.text}
+          };
         case KEYPOINTS_ESTIMATED:
-          return {...state, keypoints: action.keypoints};
+          return {...state, keypoints: action.payload};
 
         default:
           return state;
       }
     }
+
+export type RootState = StateType<typeof reducer>;
 
 export default reducer;

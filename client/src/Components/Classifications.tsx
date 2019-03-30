@@ -1,8 +1,8 @@
 import React from 'react'
-import { DatasetObject } from '../types';
+import { DatasetObject, Activities } from '../types';
 
 type Props = {
-  labels: string[],
+  activities: Activities,
   getButtonClass: (id: number) => string,
   addExample: (id: number) => void,
   dataset: DatasetObject
@@ -10,10 +10,10 @@ type Props = {
 
 export type ClassExampleCount = {[classId: number]: number};
 
-const Classifications = ({labels, getButtonClass, addExample, dataset}: Props) => {
+const Classifications = ({activities, getButtonClass, addExample, dataset}: Props) => {
   return (
     <div>
-      {labels.map((name, id) => (
+      {Object.entries(activities).map((name, id) => (
         <button type="button" key={id}
           className={`btn ${getButtonClass(id)}`}
           onClick={() => addExample(id)}
