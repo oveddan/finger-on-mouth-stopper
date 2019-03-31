@@ -1,12 +1,12 @@
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 import * as tf from '@tensorflow/tfjs';
 
-import {DatasetObject, Keypoints, Labels, StorageEntry} from './types';
+import {CameraDatasets, DatasetObject, Keypoints, Labels, StorageEntry} from './types';
 
 const storageKey = 'poseClassification';
 
-export async function saveClassifierAndLabelsInLocalStorage(
-    dataset: DatasetObject, activities: Labels) {
+export async function saveDatasets(
+    dataset: CameraDatasets, activities: Labels) {
   const storageEntry = {dataset, activities};
 
   const jsonStr = JSON.stringify(storageEntry);
@@ -20,12 +20,12 @@ export async function saveClassifierAndLabelsInLocalStorage(
  *
  * @returns the list of labels
  */
-export function loadClassifierLabelsFromLocalStorage(): StorageEntry {
+export function loadDatasets(): StorageEntry|null {
   const storageJson = localStorage.getItem(storageKey);
 
   if (storageJson) {
     return JSON.parse(storageJson) as StorageEntry;
   }
 
-  return {activities: {}, dataset: {}};
+  return null;
 }

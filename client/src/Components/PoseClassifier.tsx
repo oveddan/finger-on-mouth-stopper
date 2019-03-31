@@ -1,4 +1,4 @@
-import React, { Component, Dispatch } from 'react';
+import React, { Component } from 'react';
 import * as posenet from "@tensorflow-models/posenet";
 import * as tf from '@tensorflow/tfjs';
 
@@ -6,18 +6,16 @@ import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
 import Classifications from './Classifications';
 import EditableClassifications from './EditableClassifications';
-import { chunk, setClassifierExamples, updateClassExamples, toExample } from '../util';
+import { toExample } from '../util';
 import { DatasetObject, Keypoint, Keypoints, Labels } from '../types';
-import { connect } from 'react-redux';
-import * as actions from '../actions';
-import DataSyncher from './DataSyncher';
-import { create, KNNClassifier } from '@tensorflow-models/knn-classifier';
-import { Action } from '../actions';
-import { State } from '../reducers';
+import { KNNClassifier } from '@tensorflow-models/knn-classifier';
 
 interface PoseClassifierProps {
-  dataset: DatasetObject,
-  labels: Labels,
+  cameraName: string,
+  classifier?: KNNClassifier,
+  cameraId: number,
+  dataset?: DatasetObject,
+  activities: Labels,
   keypoints?: Keypoints,
   clearDataset: () => void,
   addLabel: (text: string) => void,
@@ -27,9 +25,8 @@ interface PoseClassifierProps {
   deleteExample: (classId: number, example: number) => void
 };
 
-class PoseClassifier extends Component<PoseClassifierProps> {
+export class PoseClassifier extends Component<PoseClassifierProps> {
   endAddingExampleTimeout?: number;
-  classifier: KNNClassifier = create();
 
   state: {
     posenetModel?: posenet.PoseNet,
@@ -71,8 +68,6 @@ class PoseClassifier extends Component<PoseClassifierProps> {
     this.props.addExample(classId);
 
     setTimeout(() => {
-      updateClassExamples(this.classifier, this.props.dataset, classId);
-
       this.endAddingExampleTimeout = window.setTimeout(() => {
         this.setState({
           addingExample: null,
@@ -83,15 +78,13 @@ class PoseClassifier extends Component<PoseClassifierProps> {
 
   deleteExample = (classId: number, example: number): void => {
     this.props.deleteExample(classId, example);
-
-    setTimeout(() => {
-      updateClassExamples(this.classifier, this.props.dataset, classId);
-    });
   }
 
   updateClassification = () => {
     setTimeout(async () => {
-      const classId = await classify(this.classifier, this.props.dataset, this.props.keypoints);
+      if (!this.props.classifier || !this.props.dataset) return;
+
+      const classId = await classify(this.props.classifier, this.props.dataset, this.props.keypoints);
 
       this.setState({
         classId
@@ -123,7 +116,6 @@ class PoseClassifier extends Component<PoseClassifierProps> {
 
   resetDataset = async () => {
     this.props.clearDataset();
-    this.classifier.clearAllClasses();
   }
 
   getButtonClass = (poseClassIndex: number) => {
@@ -149,21 +141,11 @@ class PoseClassifier extends Component<PoseClassifierProps> {
     this.setState({editingClassifications: !this.state.editingClassifications});
   }
 
-  getClassificationKeypoints = async (classId: number): Promise<[number, number][][]> => {
-    const tensor = await this.classifier.getClassifierDataset()[classId];
-
-    const data = Array.from(await tensor.data()) as number[];
-
-    const chunkedToPose = chunk(data, 34).map(poseKeypoints => chunk(poseKeypoints, 2) as [number, number][]);
-
-    return chunkedToPose;
-  }
-
   render() {
-    const { dataset, labels, keypoints } = this.props;
+    const { dataset, activities, keypoints } = this.props;
     return (
       <div>
-        <h1>Pose Classifier</h1>
+        <h2>{this.props.cameraName}</h2>
         <div className="row">
           <div className="col-sm">
             <VideoPlayer frameChanged={this.frameChanged}  />
@@ -182,7 +164,7 @@ class PoseClassifier extends Component<PoseClassifierProps> {
                 <EditableClassifications
                   dataset={dataset}
                   getButtonClass={this.getButtonClass}
-                  labels={this.props.labels}
+                  labels={this.props.activities}
                   updateLabel={this.props.updateLabel}
                   addLabel={this.props.addLabel}
                   deleteExample={this.deleteExample}
@@ -191,7 +173,7 @@ class PoseClassifier extends Component<PoseClassifierProps> {
             )}
             {!this.state.editingClassifications && (
               <Classifications
-                activities={labels}
+                activities={activities}
                 dataset={dataset}
                 getButtonClass={this.getButtonClass}
                 addExample={this.addExample}
@@ -207,8 +189,6 @@ class PoseClassifier extends Component<PoseClassifierProps> {
             <br/><br/>
             </div>
         </div>
-        <Header />
-        <DataSyncher classifier={this.classifier} />
       </div>
     );
   }
@@ -238,22 +218,6 @@ const estimateAndNormalizeKeypoints = async (
   ));
 }
 
-const Header = () => (
-  <div className='row'>
-    <div className='col-sm'>
-      <p>Classify poses from a live webcam feed or an existing video,
-        using <a href='https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5'>PoseNet </a>
-        and the <a href='https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier'>KNN Classifier. </a>
-        To add an entry to classify from the current frame, click the button for the corresponsding classification.
-        The classification model <strong>is automatically saved to the browser <a href='https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage'>local storage,</a>
-          </strong> and when the page is
-        refreshed or loaded this saved model is loaded. </p>
-        <p>It works with a single pose, <b>and is best when one person in visible in the picture.</b>
-        </p>
-    </div>
-  </div>
-)
-
 const classify = async(classifier: KNNClassifier, dataset: DatasetObject, keypoints?: Keypoints) => {
   if (Object.keys(dataset).length === 0) return;
 
@@ -267,20 +231,3 @@ const classify = async(classifier: KNNClassifier, dataset: DatasetObject, keypoi
 
   return prediction.classIndex;
 }
-
-const mapStateToProps = ({dataset, labels, keypoints}: State) => ({
-  dataset, labels, keypoints
-});
-
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  deleteExample: (classId: number, exampleId: number) => dispatch(actions.deleteExample(classId, exampleId)),
-  clearDataset: () => dispatch(actions.clearDataset()),
-  addLabel: (text: string) => dispatch(actions.addLabel(text)),
-  updateLabel: (id: number, text: string) => dispatch(actions.updateLabel(id, text)),
-  addExample: (id: number) => dispatch(actions.addExample(id)),
-  keypointsEstimated: (keypoints: Keypoints) => dispatch(actions.keypointsEstimated(keypoints))
-});
-
-
-export default connect(mapStateToProps, mapDispatchToProps)(PoseClassifier);
-

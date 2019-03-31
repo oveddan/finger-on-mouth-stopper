@@ -14,14 +14,14 @@ type Props = {
   updateLabel: (id: number, label: string) => void,
   addLabel: (label: string) => void,
   deleteExample: (classId: number, example: number) => void,
-  dataset: DatasetObject
+  dataset?: DatasetObject
 }
 
 export type ClassExampleCount = {[classId: number]: number};
 
 const ENTER = 'Enter';
 
-const EditableClassifications = ({labels, getButtonClass, dataset, updateLabel, addLabel, deleteExample}: Props) => {
+const EditableClassifications = ({labels, getButtonClass, dataset = {}, updateLabel, addLabel, deleteExample}: Props) => {
   const [{editingClassId, editingLabel, newLabel}, setState] = useState<State>({
   });
 

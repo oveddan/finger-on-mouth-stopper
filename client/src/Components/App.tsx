@@ -3,16 +3,15 @@ import React from 'react'
 import './App.css';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 
-import PoseClassifier from './PoseClassifier'
+import PoseClassifiers from './PoseClassifiers'
 import Scheduler from './Scheduler'
-import DataSyncher from './DataSyncher';
 import { Provider } from 'react-redux';
 import store from '../store';
+import DataSyncher from './DataSyncher';
 
 const Index = () => (
   <div />
 );
-
 
 const AppRouter = () => (
   <Router>
@@ -33,8 +32,9 @@ const AppRouter = () => (
         </nav>
 
         <Route path="/" exact component={Index} />
-        <Route path="/pose_classifier/" component={PoseClassifier} />
+        <Route path="/pose_classifier/" component={PoseClassifiers} />
         <Route path="/scheduler/" component={Scheduler} />
+        <DataSyncher />
       </div>
     </Provider>
   </Router>
