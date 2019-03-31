@@ -21,23 +21,25 @@ interface PoseClassifiersProps {
 }
 
 const PoseClassifiers = (props: PoseClassifiersProps) => (
-  <div>
+  <div className="row">
     {(props.cameras.map((camera, cameraId) => (
-      <PoseClassifier
-        key={cameraId}
-        classifier={props.cameraClassifiers[cameraId]}
-        cameraId={cameraId}
-        cameraName={camera}
-        dataset={props.cameraDatasets[cameraId]}
-        activities={props.activities}
-        keypoints={props.cameraKeypoints[cameraId]}
-        clearDataset={() => props.clearDataset(cameraId)}
-        addLabel={props.addLabel}
-        updateLabel={props.updateLabel}
-        keypointsEstimated={(keypoints) => props.keypointsEstimated(keypoints, cameraId)}
-        addExample={(classId) => props.addExample(classId, cameraId)}
-        deleteExample={(classId, example) => props.deleteExample(classId, example, cameraId)}
-      />
+      <div className="col-6">
+        <PoseClassifier
+          key={cameraId}
+          classifier={props.cameraClassifiers[cameraId]}
+          cameraId={cameraId}
+          cameraName={camera}
+          dataset={props.cameraDatasets[cameraId]}
+          activities={props.activities}
+          keypoints={props.cameraKeypoints[cameraId]}
+          clearDataset={() => props.clearDataset(cameraId)}
+          addLabel={props.addLabel}
+          updateLabel={props.updateLabel}
+          keypointsEstimated={(keypoints) => props.keypointsEstimated(keypoints, cameraId)}
+          addExample={(classId) => props.addExample(classId, cameraId)}
+          deleteExample={(classId, example) => props.deleteExample(classId, example, cameraId)}
+        />
+      </div>
     )))}
   </div>
 )

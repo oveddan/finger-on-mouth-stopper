@@ -146,17 +146,18 @@ export class PoseClassifier extends Component<PoseClassifierProps> {
     return (
       <div>
         <h2>{this.props.cameraName}</h2>
-        <div className="row">
-          <div className="col-sm">
-            <VideoPlayer frameChanged={this.frameChanged}  />
+          <div className="row">
+            <VideoPlayer frameChanged={this.frameChanged} camera={this.props.cameraName}  />
          </div>
+         <div className="row">
           <div className="col-sm">
-            <h5>Normalized Pose to Classify:</h5>
             <Pose keypoints={keypoints} boxes={[]} width={200} height={200*480/640}/>
+          </div>
+          <div className="col-sm">
             <h5>
-              Classifications (number examples):
+              Classifications:
               {!this.state.editingClassifications && (
-                <a href="#" onClick={this.toggleEditClassifications}>edit</a>
+                <a href="#" onClick={this.toggleEditClassifications}> edit</a>
               )}
             </h5>
             {this.state.editingClassifications && (
@@ -204,15 +205,6 @@ const estimateAndNormalizeKeypoints = async (
 
   const [ height, width ] = video.shape;
 
-  // const boundingBox = posenet.getBoundingBox(poses[0].keypoints);
-  // const width = boundingBox.maxX - boundingBox.minX;
-  // const height = boundingBox.maxY - boundingBox.minY;
-
-  // normalize keypoints to bounding box
-  // return poses[0].keypoints.map(p => ([
-  //   (p.position.x - boundingBox.minX) / width,
-  //   (p.position.y - boundingBox.minY) / height
-  // ]));
   return poses[0].keypoints.map(({position: { x, y }}): [number, number] => (
     [x / width, y / height]
   ));

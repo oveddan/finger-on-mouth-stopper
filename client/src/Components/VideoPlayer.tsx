@@ -11,7 +11,8 @@ type State = {
 };
 
 type Props = {
-  frameChanged: (video: HTMLVideoElement | HTMLImageElement) => void
+  frameChanged: (video: HTMLVideoElement | HTMLImageElement) => void,
+  camera: string
 };
 
 
@@ -83,7 +84,7 @@ export default class VideoPlayer extends Component<Props, State> {
           <ExistingVideo url={this.state.videoUrl} frameChanged={this.props.frameChanged} />
         )}
         {this.state.cameraSource === STREAM && (
-          <StreamVideo url={this.state.videoUrl} frameChanged={this.props.frameChanged} />
+          <StreamVideo camera={this.props.camera} frameChanged={this.props.frameChanged} />
         )}
         {this.state.cameraSource === WEBCAM && (
           <WebcamVideo frameChanged={this.props.frameChanged}/>
@@ -201,10 +202,12 @@ class WebcamVideo extends Component<WebcamVideoProps> {
 
 type StreamVideoProps = {
   frameChanged: (video: HTMLVideoElement | HTMLImageElement) => void,
-  url: string
+  camera: string,
 }
 
 const UPDATE_DURATION = 250;
+
+const CAMERA_HOST = 'http://localhost:5000'
 
 class StreamVideo extends Component<StreamVideoProps> {
   imageRef = createRef<HTMLImageElement>();
@@ -237,6 +240,6 @@ class StreamVideo extends Component<StreamVideoProps> {
   }
 
   render() {
-    return <img ref={this.imageRef} src={'http://localhost:5000/stream.mjpeg'} onLoad={this.imageLoaded} crossOrigin="anonymous"/>
+    return <img ref={this.imageRef} src={`${CAMERA_HOST}/${this.props.camera}.mjpeg`} onLoad={this.imageLoaded} crossOrigin="anonymous"/>
   }
 }
