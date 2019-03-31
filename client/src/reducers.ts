@@ -98,7 +98,7 @@ const reducer = (state = initialState, action: Actions):
                 cameraDatasets: action.payload.dataset,
                 activities: action.payload.activities,
                 cameraClassifiers: setClassifiersExamples(
-                    cameraNames(state.cameras), state.cameraClassifiers,
+                    action.payload.camerasState, state.cameraClassifiers,
                     action.payload.dataset)
           }
         case CLEAR_DATASET:

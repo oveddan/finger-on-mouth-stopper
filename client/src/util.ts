@@ -1,6 +1,8 @@
 import {create, KNNClassifier} from '@tensorflow-models/knn-classifier';
 import * as tf from '@tensorflow/tfjs';
+import {downloadPackedMatrixFromBuffer} from '@tensorflow/tfjs-core/dist/kernels/webgl/gpgpu_util';
 
+import {CamerasStatus} from './serverApi';
 import {CameraClassifiers, CameraDatasets, DatasetObject, Keypoints} from './types';
 
 export function chunk<T>(input: T[], chunkSize: number): T[][] {
@@ -53,7 +55,7 @@ export const updateClassExamples =
     };
 
 export const setClassifiersExamples =
-    (cameras: string[], classifiers: CameraClassifiers,
+    (cameras: CamerasStatus, classifiers: CameraClassifiers,
      datasets: CameraDatasets):
         CameraClassifiers => {
           const result: CameraClassifiers = {};
