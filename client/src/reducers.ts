@@ -1,8 +1,10 @@
 import {KNNClassifier} from '@tensorflow-models/knn-classifier';
+import {PoseNet} from '@tensorflow-models/posenet';
 import {action, ActionType, StateType} from 'typesafe-actions';
 
 import * as actions from './actions';
-import {ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
+import {ADD_EXAMPLE, ADD_LABEL, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
+import {CamerasStatus} from './serverApi';
 import {CameraClassifiers, DatasetObject, Keypoints, Labels} from './types';
 import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from './util';
 
@@ -10,12 +12,14 @@ export type State = {
   readonly cameraDatasets: {
     [cameraId: number]: DatasetObject,
   },
-  readonly cameraClassifiers: CameraClassifiers,
-  readonly cameras: string[],
-  readonly activities: Labels,
   readonly cameraKeypoints: {
     [cameraId: number]: Keypoints
-  }
+  },
+  readonly posenetModel?: PoseNet,
+  readonly cameraClassifiers: CameraClassifiers,
+  readonly cameras: CamerasStatus,
+  // readonly cameraFrames: CameraFrameType[],
+  readonly activities: Labels
 };
 
 const defaultActivities = [
@@ -23,12 +27,10 @@ const defaultActivities = [
   'doing dishes', 'meditating'
 ];
 
-const defaultCameras = ['Bedroom', 'Kitchen'];
-
 const initialState: State = {
   cameraDatasets: {},
   cameraClassifiers: {},
-  cameras: defaultCameras,
+  cameras: {},
   activities: defaultActivities.reduce(
       (result: {[id: number]: string}, activity, id):
           {[id: number]: string} => {
@@ -48,6 +50,9 @@ const max = (values: number[]) =>
 
 const nextActivityId = (activities: Labels) =>
     max(Object.keys(activities).map(x => +x)) + 1;
+
+const cameraNames = (cameras: CamerasStatus) =>
+    Object.values(cameras).map(({name}) => name);
 
 const reducer = (state = initialState, action: Actions):
     State => {
@@ -88,12 +93,12 @@ const reducer = (state = initialState, action: Actions):
             }
           }
         case SET_DATASET:
-
           return {
-            ...state, cameraDatasets: action.payload.dataset,
+            ...state, cameras: action.payload.camerasState,
+                cameraDatasets: action.payload.dataset,
                 activities: action.payload.activities,
                 cameraClassifiers: setClassifiersExamples(
-                    state.cameras, state.cameraClassifiers,
+                    cameraNames(state.cameras), state.cameraClassifiers,
                     action.payload.dataset)
           }
         case CLEAR_DATASET:
@@ -120,9 +125,10 @@ const reducer = (state = initialState, action: Actions):
           var {cameraId, keypoints} = action.payload;
           return {
             ...state,
-                cameraKeypoints:
-                    {...state.cameraKeypoints, [cameraId]: keypoints}
-          }
+            cameraKeypoints: {...state.cameraKeypoints, [cameraId]: keypoints}
+          };
+        case CAMERA_STATUS_UPDATED:
+          return {...state, cameras: action.payload};
 
         default:
           return state;

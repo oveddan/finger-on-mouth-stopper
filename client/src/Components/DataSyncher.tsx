@@ -6,22 +6,25 @@ import * as actions from "../actions";
 import { saveDatasets, loadDatasets} from "../classifierStorage";
 import { Action } from "../actions";
 import { State } from "../reducers";
+import { getServerState, CamerasStatus } from "../serverApi";
 
 type DataSyncerProps = {
   cameraDatasets: CameraDatasets,
   activities: Labels,
-  setDatasets: typeof actions.setDatasets
-}
+  setDatasets: typeof actions.initializeDataset
+};
 
 class DataSyncer extends Component<DataSyncerProps> {
-  componentDidMount() {
+  async componentDidMount() {
+    const serverStatus = await getServerState();
+
     const storageEntry = loadDatasets();
 
     if (!storageEntry) {
-      this.props.setDatasets(this.props.cameraDatasets, this.props.activities);
+      this.props.setDatasets(serverStatus.cameras, this.props.cameraDatasets, this.props.activities);
     } else {
       const { activities, dataset } = storageEntry;
-      this.props.setDatasets(dataset, activities);
+      this.props.setDatasets(serverStatus.cameras, dataset, activities);
     }
   }
 
@@ -38,7 +41,7 @@ class DataSyncer extends Component<DataSyncerProps> {
 }
 
 const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  setDatasets: (dataset: CameraDatasets, activities: Labels) => dispatch(actions.setDatasets(dataset, activities)),
+  setDatasets: (cameras: CamerasStatus, dataset: CameraDatasets, activities: Labels) => dispatch(actions.initializeDataset(cameras, dataset, activities)),
 })
 
 const mapStateToProps = ({cameraDatasets, activities}: State) => ({

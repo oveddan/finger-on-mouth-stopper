@@ -1,7 +1,8 @@
 import {action, ActionType} from 'typesafe-actions';
 
-import {ADD_EXAMPLE, ADD_LABEL, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
-import {CameraDatasets, DatasetObject, Keypoints, Labels} from './types';
+import {ADD_EXAMPLE, ADD_LABEL, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
+import {CamerasStatus} from './serverApi';
+import {CameraDatasets, Keypoints, Labels} from './types';
 
 export const addExample = (classId: number, cameraId: number) =>
     action(ADD_EXAMPLE, {classId, cameraId});
@@ -10,8 +11,10 @@ export const deleteExample =
     (classId: number, cameraId: number, example: number) =>
         action(DELETE_EXAMPLE, {classId, cameraId, example});
 
-export const setDatasets = (dataset: CameraDatasets, activities: Labels) =>
-    action(SET_DATASET, {dataset, activities});
+export const initializeDataset =
+    (camerasState: CamerasStatus, dataset: CameraDatasets,
+     activities: Labels) =>
+        action(SET_DATASET, {camerasState, dataset, activities});
 
 export const clearDataset = (cameraId: number) =>
     action(CLEAR_DATASET, cameraId);
@@ -24,14 +27,18 @@ export const updateLabel = (id: number, text: string) =>
 export const keypointsEstimated = (keypoints: Keypoints, cameraId: number) =>
     action(KEYPOINTS_ESTIMATED, {keypoints, cameraId});
 
+export const updateCamerasStatus = (camerasStatus: CamerasStatus) =>
+    action(CAMERA_STATUS_UPDATED, camerasStatus);
+
 const actions = {
   addExample,
   deleteExample,
-  setDatasets,
+  initializeDataset,
   clearDataset,
   addLabel,
   updateLabel,
-  keypointsEstimated
+  keypointsEstimated,
+  updateCamerasStatus
 };
 // export type RootAction = ActionType<ActionTypes>;
 

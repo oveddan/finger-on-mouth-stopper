@@ -1,6 +1,8 @@
 import {KNNClassifier} from '@tensorflow-models/knn-classifier';
 import {Tensor2D} from '@tensorflow/tfjs';
 
+export type CameraFrameType = HTMLVideoElement|HTMLImageElement;
+
 export type Keypoint = [number, number];
 export type Keypoints = Keypoint[];
 

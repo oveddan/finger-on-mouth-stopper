@@ -1,5 +1,6 @@
-import React, {useState, Component, ChangeEvent, createRef} from 'react'
-import { async } from 'q';
+import React, {Component, ChangeEvent} from 'react'
+import { CameraStatus } from '../serverApi';
+import StreamVideo from './StreamVideo';
 
 const WEBCAM = 'Webcam';
 const STREAM = 'Stream';
@@ -12,7 +13,8 @@ type State = {
 
 type Props = {
   frameChanged: (video: HTMLVideoElement | HTMLImageElement) => void,
-  camera: string
+  camera: CameraStatus,
+  cameraId: number,
 };
 
 
@@ -84,7 +86,11 @@ export default class VideoPlayer extends Component<Props, State> {
           <ExistingVideo url={this.state.videoUrl} frameChanged={this.props.frameChanged} />
         )}
         {this.state.cameraSource === STREAM && (
-          <StreamVideo camera={this.props.camera} frameChanged={this.props.frameChanged} />
+          <StreamVideo
+            cameraId={this.props.cameraId}
+            camera={this.props.camera}
+            frameChanged={this.props.frameChanged}
+          />
         )}
         {this.state.cameraSource === WEBCAM && (
           <WebcamVideo frameChanged={this.props.frameChanged}/>
@@ -197,49 +203,5 @@ class WebcamVideo extends Component<WebcamVideoProps> {
       >
       </video>
     );
-  }
-}
-
-type StreamVideoProps = {
-  frameChanged: (video: HTMLVideoElement | HTMLImageElement) => void,
-  camera: string,
-}
-
-const UPDATE_DURATION = 250;
-
-const CAMERA_HOST = 'http://localhost:5000'
-
-class StreamVideo extends Component<StreamVideoProps> {
-  imageRef = createRef<HTMLImageElement>();
-  updateInterval?: NodeJS.Timeout;
-
-  imageLoaded = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    setTimeout(() => {
-      const image = this.imageRef.current;
-      if (image) {
-        image.width = image.clientWidth;
-        image.height = image.clientHeight;
-      }
-
-      this.startUpdating();
-    }, 100);
-  }
-
-  startUpdating = () => {
-    this.updateInterval = setInterval(() => {
-      if(this.imageRef.current) {
-        this.props.frameChanged(this.imageRef.current);
-      }
-    }, UPDATE_DURATION);
-  }
-
-  componentWillUnmount() {
-    if (this.updateInterval) {
-      clearInterval(this.updateInterval);
-    }
-  }
-
-  render() {
-    return <img ref={this.imageRef} src={`${CAMERA_HOST}/${this.props.camera}.mjpeg`} onLoad={this.imageLoaded} crossOrigin="anonymous"/>
   }
 }

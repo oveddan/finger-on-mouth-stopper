@@ -9,9 +9,10 @@ import EditableClassifications from './EditableClassifications';
 import { toExample } from '../util';
 import { DatasetObject, Keypoint, Keypoints, Labels } from '../types';
 import { KNNClassifier } from '@tensorflow-models/knn-classifier';
+import { CameraStatus } from '../serverApi';
 
 interface PoseClassifierProps {
-  cameraName: string,
+  camera: CameraStatus,
   classifier?: KNNClassifier,
   cameraId: number,
   dataset?: DatasetObject,
@@ -145,9 +146,9 @@ export class PoseClassifier extends Component<PoseClassifierProps> {
     const { dataset, activities, keypoints } = this.props;
     return (
       <div>
-        <h2>{this.props.cameraName}</h2>
+        <h2>{this.props.camera.name}</h2>
           <div className="row">
-            <VideoPlayer frameChanged={this.frameChanged} camera={this.props.cameraName}  />
+            <VideoPlayer cameraId={this.props.cameraId} frameChanged={this.frameChanged} camera={this.props.camera}  />
          </div>
          <div className="row">
           <div className="col-sm">
@@ -195,10 +196,11 @@ export class PoseClassifier extends Component<PoseClassifierProps> {
   }
 }
 
+const imageScaleFactor = 0.5;
 const estimateAndNormalizeKeypoints = async (
   posenetModel: posenet.PoseNet,
   video: tf.Tensor3D): Promise<Keypoints | undefined> => {
-  const poses = await posenetModel.estimateMultiplePoses(video, 1, false, 8, 1);
+  const poses = await posenetModel.estimateMultiplePoses(video, imageScaleFactor, false, 8, 1);
   if (poses.length === 0) {
     return undefined;
   }

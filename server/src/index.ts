@@ -1,26 +1,24 @@
+import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
 import * as dgram from 'dgram'
 import * as express from 'express';
 import * as http from 'http';
 import {AddressInfo} from 'net';
+import {join} from 'path';
 
 import {writeInitial, writeToResponse} from './mjpegServer';
+import {startRecording, stopRecording} from './recording';
+import {CAMERA_PORTS, cameras, getStatus} from './state';
+import {saveImage} from './util';
 
 const HOST = '0.0.0.0'
-
-const kitchen = 'kitchen';
-const bedroom = 'bedroom';
-const values = [kitchen, bedroom];
-
-const PORTS = {
-  [kitchen]: 9002,
-  [bedroom]: 9003
-}
 
 const app = express();
 app.use(cors());
 
-values.forEach(camera => {
+app.use(bodyParser());
+
+cameras.forEach((camera, cameraId) => {
   const server = dgram.createSocket('udp4');
 
   server.on('listening', () => {
@@ -38,15 +36,58 @@ values.forEach(camera => {
   })
 
   server.on('message', (message) => {
-    console.log('got message with size', message.length)
+    // console.log(`${camera} camera sent ${message.length} bytes`)
+
+    const status = getStatus();
+    if (status.cameras[cameraId].recordingPath) {
+      const fileName = (new Date().getTime()) + '.jpg';
+      saveImage(
+          message, status.cameras[cameraId].recordingPath as string, fileName);
+    }
 
     if (client) writeToResponse(client, message);
   });
 
-  server.bind(PORTS[camera], HOST);
+  server.bind(CAMERA_PORTS[camera], HOST);
 
   return server;
 });
+
+const clientFolder = join(__dirname, '../../', 'client')
+
+// Static file declaration
+app.use(express.static(join(clientFolder, 'build')));
+
+app.get('/status', (_, res) => {
+  res.json(getStatus());
+});
+
+type RecordPost = {
+  cameraId: number,
+  record: boolean
+};
+
+app.post('/record', async (req, res) => {
+  try {
+    const {body}: {body: RecordPost} = req;
+
+    if (body.record) {
+      await startRecording(body.cameraId);
+    } else {
+      await stopRecording(body.cameraId);
+    }
+
+    res.json(getStatus());
+  } catch (e) {
+    console.error(e);
+    res.status(500).send(e.stack);
+  }
+})
+
+// app.use((err, req, res, _next) => {
+//   console.error(err.stack);
+//   res.status(500).send('Something broke!');
+// });
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log('Listening on ' + port));
