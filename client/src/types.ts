@@ -15,8 +15,12 @@ export type CameraDatasets = {
 }
 
 export type CameraKeypoints = {
-  [cameraId: number]: Keypoints
+  [cameraId: number]: Keypoints|undefined
 }
+
+export type CameraFrames = {
+  [cameraId: number]: {frame: CameraFrameType, updateTime: number}
+};
 
 export type DatasetObject = {
   [classId: number]: Keypoints[]
@@ -34,3 +38,7 @@ export type StorageEntry = {
 export type CameraClassifiers = {
   [cameraId: number]: KNNClassifier
 }
+
+export type CameraClassifications = {
+  [cameraId: number]: number|null
+};

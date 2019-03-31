@@ -1,227 +1,128 @@
 import React, { Component } from 'react';
-import * as posenet from "@tensorflow-models/posenet";
-import * as tf from '@tensorflow/tfjs';
+import * as actions from '../actions';
 
-import Pose from './Pose';
-import VideoPlayer from './VideoPlayer';
-import Classifications from './Classifications';
-import EditableClassifications from './EditableClassifications';
-import { toExample } from '../util';
-import { DatasetObject, Keypoint, Keypoints, Labels } from '../types';
-import { KNNClassifier } from '@tensorflow-models/knn-classifier';
-import { CameraStatus } from '../serverApi';
+import * as batchPoseNet from '../batchPoseNet';
 
-interface PoseClassifierProps {
-  camera: CameraStatus,
-  classifier?: KNNClassifier,
-  cameraId: number,
-  dataset?: DatasetObject,
-  activities: Labels,
-  keypoints?: Keypoints,
-  clearDataset: () => void,
-  addLabel: (text: string) => void,
-  updateLabel: (id: number, text: string) => void,
-  keypointsEstimated: (keypoints: Keypoints) => void
-  addExample: (clasId: number) => void,
-  deleteExample: (classId: number, example: number) => void
+import { Keypoints, CameraFrameType, CameraDatasets, CameraClassifiers, CameraKeypoints, CameraFrames } from '../types';
+
+import { State } from '../reducers';
+import { Dispatch, Action } from 'redux';
+import { connect } from 'react-redux';
+import { performPoseEstimation, classify } from '../estimation';
+
+interface Props {
+  cameraDatasets: CameraDatasets,
+  cameraClassifiers: CameraClassifiers,
+  frames:  {
+    [cameraId: number]: {
+      frame: CameraFrameType,
+      updateTime: number
+    }
+  },
+  keypointsEstimated: (keypoints: CameraKeypoints) => void,
+  poseClassified: (cameraId: number, classId: number | null) => void
 };
 
-export class PoseClassifier extends Component<PoseClassifierProps> {
+class Classifier extends Component<Props> {
+
   endAddingExampleTimeout?: number;
+  performingEstimation: boolean = false;
+  awaitingEstimationFinished: boolean = false;
 
   state: {
-    posenetModel?: posenet.PoseNet,
-    videoLoaded: boolean,
-    classId: number,
-    addingExample: number | null,
-    videoPlaying: boolean,
-    editingClassifications: boolean,
-    videoSource:  {
-      liveVideo: boolean,
-      videoUrl?: string
-    },
+    posenetModel?: batchPoseNet.BatchPoseNet,
+    awaitingEstimation: boolean
   } = {
-    videoLoaded: false,
-    classId: -1,
-    addingExample: null,
-    videoPlaying: false,
-    editingClassifications: false,
-    videoSource: {
-      liveVideo: false,
-    }
+    awaitingEstimation: false
   };
 
   async componentDidMount() {
-    const posenetModel = await posenet.load(1.00);
+    const net = await batchPoseNet.load(1.00);
 
-    this.setState({posenetModel});
+    this.setState({posenetModel: net})
+
+    this.estimateKeypointsAndClassify();
   }
 
-  addExample = (classId: number) => {
-    this.setState({
-      addingExample: classId
-    });
 
-    if (this.endAddingExampleTimeout) {
-      window.clearTimeout(this.endAddingExampleTimeout);
-    }
+  estimateKeypointsAndClassify = async () =>  {
+    this.performingEstimation = true;
+    this.awaitingEstimationFinished = false;
 
-    this.props.addExample(classId);
 
-    setTimeout(() => {
-      this.endAddingExampleTimeout = window.setTimeout(() => {
-        this.setState({
-          addingExample: null,
-        });
-      }, 200);
-    });
-  }
+    const cameraKeypoints = await this.performPoseEstimation();
 
-  deleteExample = (classId: number, example: number): void => {
-    this.props.deleteExample(classId, example);
-  }
+    try {
+      await Promise.all(Object.keys(cameraKeypoints).map(async id => {
+        const keypoints = cameraKeypoints[+id];
+        if (!keypoints) return null;
 
-  updateClassification = () => {
-    setTimeout(async () => {
-      if (!this.props.classifier || !this.props.dataset) return;
+        return await this.performClassification(+id, keypoints);
+      }));
 
-      const classId = await classify(this.props.classifier, this.props.dataset, this.props.keypoints);
+      this.performingEstimation = false;
 
-      this.setState({
-        classId
-      });
-    });
-
-  }
-
-  estimateKeypoints = async (video: HTMLVideoElement | HTMLImageElement) => {
-    if (this.state.posenetModel) {
-      let videoTensor: tf.Tensor3D;
-      try {
-        videoTensor = tf.browser.fromPixels(video);
-      } catch(e) {
-        console.error('could not load video');
-        console.error(e);
-        return;
+      if (this.awaitingEstimationFinished) {
+        await this.estimateKeypointsAndClassify();
       }
-
-      const keypoints = await estimateAndNormalizeKeypoints(this.state.posenetModel, videoTensor);
-
-      if (keypoints) {
-        this.props.keypointsEstimated(keypoints);
-
-        this.updateClassification();
-      }
+    } catch(e) {
+      console.error(e);
     }
   }
 
-  resetDataset = async () => {
-    this.props.clearDataset();
-  }
-
-  getButtonClass = (poseClassIndex: number) => {
-    const { classId, addingExample } = this.state;
-    if (addingExample !== null) {
-      if (poseClassIndex === addingExample) {
-        return "btn-success"
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.frames !== this.props.frames) {
+      if (this.performingEstimation) {
+        this.awaitingEstimationFinished = true;
       } else {
-        return "btn-light"
+        this.estimateKeypointsAndClassify();
       }
     }
-
-    if (classId === poseClassIndex) {
-      return "btn-primary"
-    };
-
-    return "btn-light";
   }
 
-  frameChanged = this.estimateKeypoints
+  async performPoseEstimation(): Promise<CameraKeypoints> {
+    if (!this.state.posenetModel)
+      return {};
 
-  toggleEditClassifications = () => {
-    this.setState({editingClassifications: !this.state.editingClassifications});
+    const results = await performPoseEstimation(this.state.posenetModel, this.props.frames);
+
+    this.performingEstimation = false;
+
+    this.props.keypointsEstimated(results);
+
+
+    return results;
+  }
+
+  async performClassification(cameraId: number, keypoints: Keypoints) {
+    const classifier = this.props.cameraClassifiers[cameraId];
+    const dataset = this.props.cameraDatasets[cameraId];
+    if (classifier && dataset) {
+      const classId = await classify(classifier, dataset, keypoints);
+
+      this.props.poseClassified(cameraId, classId);
+    }
   }
 
   render() {
-    const { dataset, activities, keypoints } = this.props;
     return (
       <div>
-        <h2>{this.props.camera.name}</h2>
-          <div className="row">
-            <VideoPlayer cameraId={this.props.cameraId} frameChanged={this.frameChanged} camera={this.props.camera}  />
-         </div>
-         <div className="row">
-          <div className="col-sm">
-            <Pose keypoints={keypoints} boxes={[]} width={200} height={200*480/640}/>
-          </div>
-          <div className="col-sm">
-            <h5>
-              Classifications:
-              {!this.state.editingClassifications && (
-                <a href="#" onClick={this.toggleEditClassifications}> edit</a>
-              )}
-            </h5>
-            {this.state.editingClassifications && (
-              <div>
-                <EditableClassifications
-                  dataset={dataset}
-                  getButtonClass={this.getButtonClass}
-                  labels={this.props.activities}
-                  updateLabel={this.props.updateLabel}
-                  addLabel={this.props.addLabel}
-                  deleteExample={this.deleteExample}
-                />
-              </div>
-            )}
-            {!this.state.editingClassifications && (
-              <Classifications
-                activities={activities}
-                dataset={dataset}
-                getButtonClass={this.getButtonClass}
-                addExample={this.addExample}
-              />
-
-            )}
-            {this.state.editingClassifications && (
-              <a href="#" onClick={this.toggleEditClassifications}>done editing</a>
-            )}
-            <br /><br/>
-            <button className='btn btn-light' onClick={this.resetDataset}>Reset classifier</button>
-
-            <br/><br/>
-            </div>
-        </div>
+        {Object.values(this.props.frames).map(frame => (
+          <div>{frame.updateTime}</div>
+        ))}
       </div>
-    );
+    )
   }
 }
 
-const imageScaleFactor = 0.5;
-const estimateAndNormalizeKeypoints = async (
-  posenetModel: posenet.PoseNet,
-  video: tf.Tensor3D): Promise<Keypoints | undefined> => {
-  const poses = await posenetModel.estimateMultiplePoses(video, imageScaleFactor, false, 8, 1);
-  if (poses.length === 0) {
-    return undefined;
-  }
+const mapStateToProps = ({cameraClassifiers, cameraDatasets, frames}: State) => ({
+  cameraDatasets, cameraClassifiers, frames
+});
 
-  const [ height, width ] = video.shape;
+const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
+  keypointsEstimated: (keypoints: CameraKeypoints) => dispatch(actions.keypointsEstimated(keypoints)),
+  poseClassified: (cameraId: number, classId: number | null) => dispatch(actions.poseClassified(cameraId, classId))
+});
 
-  return poses[0].keypoints.map(({position: { x, y }}): [number, number] => (
-    [x / width, y / height]
-  ));
-}
+export default connect(mapStateToProps, mapDispatchToProps)(Classifier);
 
-const classify = async(classifier: KNNClassifier, dataset: DatasetObject, keypoints?: Keypoints) => {
-  if (Object.keys(dataset).length === 0) return;
-
-  if (!keypoints) return;
-
-  const keypointsTensor = toExample(keypoints);
-
-  const prediction = await classifier.predictClass(keypointsTensor);
-
-  keypointsTensor.dispose();
-
-  return prediction.classIndex;
-}

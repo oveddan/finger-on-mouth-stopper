@@ -1,8 +1,8 @@
 import React, { Component, createRef, Dispatch } from "react";
-import { CameraStatus, CamerasStatus, setRecording } from "../serverApi";
+import { CameraStatus, CamerasStatus, setRecording } from "../../serverApi";
 import { connect } from 'react-redux';
-import * as actions from '../actions';
-import { Action } from "../actions";
+import * as actions from "../../actions";
+import { Action } from '../../actions';
 import cx from 'classnames';
 
 const UPDATE_DURATION = 250;

@@ -3,23 +3,21 @@ import {PoseNet} from '@tensorflow-models/posenet';
 import {action, ActionType, StateType} from 'typesafe-actions';
 
 import * as actions from './actions';
-import {ADD_EXAMPLE, ADD_LABEL, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
+import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
 import {CamerasStatus} from './serverApi';
-import {CameraClassifiers, DatasetObject, Keypoints, Labels} from './types';
+import {CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraFrameType, CameraKeypoints, DatasetObject, Keypoints, Labels} from './types';
 import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from './util';
 
 export type State = {
-  readonly cameraDatasets: {
-    [cameraId: number]: DatasetObject,
-  },
-  readonly cameraKeypoints: {
-    [cameraId: number]: Keypoints
-  },
+  readonly cameraDatasets: CameraDatasets,
+  readonly cameraKeypoints: CameraKeypoints,
   readonly posenetModel?: PoseNet,
   readonly cameraClassifiers: CameraClassifiers,
   readonly cameras: CamerasStatus,
   // readonly cameraFrames: CameraFrameType[],
-  readonly activities: Labels
+  readonly activities: Labels,
+  readonly frames: CameraFrames,
+  readonly classifications: CameraClassifications
 };
 
 const defaultActivities = [
@@ -31,6 +29,8 @@ const initialState: State = {
   cameraDatasets: {},
   cameraClassifiers: {},
   cameras: {},
+  frames: {},
+  classifications: {},
   activities: defaultActivities.reduce(
       (result: {[id: number]: string}, activity, id):
           {[id: number]: string} => {
@@ -51,9 +51,6 @@ const max = (values: number[]) =>
 const nextActivityId = (activities: Labels) =>
     max(Object.keys(activities).map(x => +x)) + 1;
 
-const cameraNames = (cameras: CamerasStatus) =>
-    Object.values(cameras).map(({name}) => name);
-
 const reducer = (state = initialState, action: Actions):
     State => {
       const {cameraKeypoints, cameraDatasets, activities} = state;
@@ -64,10 +61,14 @@ const reducer = (state = initialState, action: Actions):
       switch (action.type) {
         case ADD_EXAMPLE:
           if (!cameraKeypoints) return state;
+
           var {cameraId, classId} = action.payload;
 
+          const keypoints = cameraKeypoints[cameraId];
+          if (!keypoints) return state;
+
           newDataset = addKeypointsToDataset(
-              cameraKeypoints[cameraId], cameraDatasets[cameraId], classId);
+              keypoints, cameraDatasets[cameraId], classId);
 
           // a wierd situation since we have a mutable classifier.
           updateClassExamples(
@@ -122,14 +123,28 @@ const reducer = (state = initialState, action: Actions):
                 {...activities, [action.payload.id]: action.payload.text}
           };
         case KEYPOINTS_ESTIMATED:
-          var {cameraId, keypoints} = action.payload;
           return {
             ...state,
-            cameraKeypoints: {...state.cameraKeypoints, [cameraId]: keypoints}
+            cameraKeypoints: {...state.cameraKeypoints, ...action.payload}
           };
         case CAMERA_STATUS_UPDATED:
           return {...state, cameras: action.payload};
-
+        case CAMERA_FRAME_UPDATED:
+          return {
+            ...state,
+            frames: {
+              ...state.frames,
+              [action.payload.cameraId]:
+                  {frame: action.payload.frame, updateTime: action.payload.time}
+            }
+          };
+        case ACTIVITY_CLASSIFIED:
+          return {
+            ...state, classifications: {
+              ...state.classifications,
+              [action.payload.cameraId]: action.payload.classId
+            }
+          }
         default:
           return state;
       }
