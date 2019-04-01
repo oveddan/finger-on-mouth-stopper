@@ -1,7 +1,7 @@
 import React, { Component, createRef } from "react";
 import { CameraStatus, CamerasStatus, setRecording } from "../../serverApi";
 import { connect } from 'react-redux';
-import * as actions from "../../activityActions";
+import * as actions from "../../actions/activityActions";
 import cx from 'classnames';
 import { bindActionCreators, Dispatch, Action } from "redux";
 import { RootAction } from "../../types";

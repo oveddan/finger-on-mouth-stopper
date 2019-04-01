@@ -4,7 +4,7 @@ import './App.css';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 
 import CamerasAndClassifications from './CamerasAndClassifications'
-import Scheduler from './Scheduler'
+import Scheduler from './Scheduling/Scheduler'
 import { Provider } from 'react-redux';
 import store from '../store';
 import DataSyncher from './DataSyncher';

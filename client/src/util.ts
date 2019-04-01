@@ -85,3 +85,10 @@ export const sum = (values: number[]) =>
     values.reduce((result, value) => value + result, 0);
 
 export const mean = (values: number[]) => sum(values) / values.length;
+
+export function indexByOrder<T>(entries: T[]): {[id: number]: T} {
+  return entries.reduce((result: {[id: number]: T}, entry, id) => {
+    result[id] = entry;
+    return result;
+  }, {});
+}

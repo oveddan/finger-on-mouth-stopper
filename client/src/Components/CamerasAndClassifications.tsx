@@ -1,14 +1,12 @@
 import React from 'react';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
-import * as actions from '../activityActions';
-import { Activities, CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction, CameraActivities } from '../types';
+import * as actions from '../actions/activityActions';
+import { CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction, CameraActivities } from '../types';
 import { CamerasStatus } from '../serverApi';
 import Classifications from './Classifications';
 import Pose from './Pose';
 import VideoPlayer from './VideoPlayer';
-import { bindActionCreators, Dispatch } from 'redux';
-import { deleteExample } from '../util';
 
 interface Props {
   cameras: CamerasStatus,

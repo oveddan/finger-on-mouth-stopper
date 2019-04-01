@@ -1,8 +1,7 @@
 import {KNNClassifier} from '@tensorflow-models/knn-classifier';
 import {Tensor2D} from '@tensorflow/tfjs';
+import * as moment from 'moment';
 import {ActionType} from 'typesafe-actions';
-
-import * as actions from './actions';
 
 export type CameraFrameType = HTMLVideoElement|HTMLImageElement;
 
@@ -29,8 +28,10 @@ export type DatasetObject = {
   [classId: number]: Keypoints[]
 };
 
+export type Activity = string;
+
 export type Activities = {
-  [id: number]: string
+  [id: number]: Activity
 };
 
 export type CameraActivities = {
@@ -51,3 +52,18 @@ export type CameraClassifications = {
 };
 
 export type RootAction = ActionType<typeof import('./actions').default>;
+
+export type ScheduleActivity = {
+  cameraId: number,
+  classId: number
+};
+
+export type ScheduleEntry = {
+  start: moment.Moment,
+  end: moment.Moment,
+  activity: ScheduleActivity
+};
+
+export type Schedule = {
+  [entryId: number]: ScheduleEntry
+};

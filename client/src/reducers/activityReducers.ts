@@ -1,11 +1,11 @@
 import {PoseNet} from '@tensorflow-models/posenet';
 import {ActionType, StateType} from 'typesafe-actions';
 
-import * as actions from './activityActions';
-import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
-import {CamerasStatus} from './serverApi';
-import {Activities, CameraActivities, CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraKeypoints} from './types';
-import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from './util';
+import * as actions from '../actions/activityActions';
+import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from '../constants';
+import {CamerasStatus} from '../serverApi';
+import {Activities, CameraActivities, CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraKeypoints} from '../types';
+import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from '../util';
 
 export type State = {
   readonly cameraDatasets: CameraDatasets,
@@ -110,7 +110,6 @@ const activityReducer = (state = initialState, action: ActivityActions):
           var {cameraId, text} = action.payload;
 
           const newCameraActivities = addLabel(activities[cameraId], text);
-          console.log('new activities', newCameraActivities);
           return {
             ...state,
             activities: {...state.activities, [cameraId]: newCameraActivities}

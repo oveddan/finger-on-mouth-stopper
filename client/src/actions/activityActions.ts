@@ -1,8 +1,8 @@
-import {action, ActionType} from 'typesafe-actions';
+import {action} from 'typesafe-actions';
 
-import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
-import {CamerasStatus} from './serverApi';
-import {Activities, CameraActivities, CameraDatasets, CameraFrameType, CameraKeypoints, Keypoints} from './types';
+import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from '../constants';
+import {CamerasStatus} from '../serverApi';
+import {CameraActivities, CameraDatasets, CameraFrameType, CameraKeypoints} from '../types';
 
 export const addExample = (classId: number, cameraId: number) =>
     action(ADD_EXAMPLE, {classId, cameraId})
@@ -37,16 +37,3 @@ export const poseClassified = (cameraId: number, classId: number|null) =>
 export const frameUpdated =
     (cameraId: number, frame: CameraFrameType, time: number) =>
         action(CAMERA_FRAME_UPDATED, {cameraId, frame, time})
-
-    // const actions = {
-    //   addExample,
-    //   deleteExample,
-    //   initializeDataset,
-    //   clearDataset,
-    //   addLabel,
-    //   updateLabel,
-    //   keypointsEstimated,
-    //   updateCamerasStatus,
-    //   frameUpdated
-    // };
-    // export type RootAction = ActionType<ActionTypes>;
