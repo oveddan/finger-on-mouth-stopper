@@ -36,7 +36,7 @@ cameras.forEach((camera, cameraId) => {
   })
 
   server.on('message', (message) => {
-    // console.log(`${camera} camera sent ${message.length} bytes`)
+    console.log(`${camera} camera sent ${message.length} bytes`)
 
     const status = getStatus();
     if (status.cameras[cameraId].recordingPath) {

@@ -7,7 +7,6 @@ import * as batchPoseNet from './batchPoseNet';
 import {CameraFrames, CameraKeypoints, DatasetObject, Keypoints} from './types';
 import {toExample} from './util';
 
-const imageScaleFactor = 0.5;
 export const extractAndNormalizeKeypoints =
     (poses: posenet.Pose[], input: tf.Tensor3D): Keypoints|undefined => {
       if (poses.length === 0) {
@@ -34,6 +33,8 @@ export const classify = async (
   return prediction.classIndex;
 };
 
+const imageScaleFactor = 1;
+const outputStride = 16;
 export const performPoseEstimation =
     async(posenetModel: batchPoseNet.BatchPoseNet, frames: CameraFrames):
         Promise<CameraKeypoints> => {
@@ -50,8 +51,8 @@ export const performPoseEstimation =
               }
             })
 
-            const allFramesPoses =
-                await posenetModel.estimateMultiplePoses(Object.values(tensors))
+            const allFramesPoses = await posenetModel.estimateMultiplePoses(
+                Object.values(tensors), 1, false, 8)
 
             Object.keys(tensors).forEach((id, index) => {
               results[+id] = extractAndNormalizeKeypoints(
