@@ -1,7 +1,7 @@
 import React from 'react';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
-import * as actions from '../actions';
+import * as actions from '../activityActions';
 import { Labels, CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction } from '../types';
 import { CamerasStatus } from '../serverApi';
 import Classifications from './Classifications';

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import * as actions from '../actions';
+import * as actions from '../activityActions';
 
 import * as batchPoseNet from '../batchPoseNet';
 

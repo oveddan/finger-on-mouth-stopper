@@ -1,11 +1,10 @@
-import {KNNClassifier} from '@tensorflow-models/knn-classifier';
 import {PoseNet} from '@tensorflow-models/posenet';
-import {action, ActionType, StateType} from 'typesafe-actions';
+import {ActionType, StateType} from 'typesafe-actions';
 
-import * as actions from './actions';
+import * as actions from './activityActions';
 import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
 import {CamerasStatus} from './serverApi';
-import {CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraFrameType, CameraKeypoints, DatasetObject, Keypoints, Labels} from './types';
+import {CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraFrameType, CameraKeypoints, DatasetObject, Keypoints, Labels, RootAction} from './types';
 import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from './util';
 
 export type State = {
@@ -41,17 +40,15 @@ const initialState: State = {
   cameraKeypoints: []
 };
 
-export type Actions = ActionType<typeof actions>;
-
-export type RootAction = ActionType<typeof actions>;
-
 const max = (values: number[]) =>
     values.reduce((result, value) => Math.max(value, result), 0);
 
 const nextActivityId = (activities: Labels) =>
     max(Object.keys(activities).map(x => +x)) + 1;
 
-const reducer = (state = initialState, action: Actions):
+type ActivityActions = ActionType<typeof actions>;
+
+const reducer = (state = initialState, action: ActivityActions):
     State => {
       const {cameraKeypoints, cameraDatasets, activities} = state;
       let newDataset;

@@ -46,4 +46,4 @@ export type CameraClassifications = {
   [cameraId: number]: number|null
 };
 
-export type RootAction = ActionType<typeof import('./rootAction').default>;
+export type RootAction = ActionType<typeof import('./actions').default>;

@@ -39,6 +39,11 @@ export class BatchPoseNet {
             toTensorBuffers3D(
                 [heatmapScores, offsets, displacementFwd, displacementBwd])));
 
+    estimationResults.forEach(
+        resultTensors => Object.values(resultTensors).forEach(tensor => {
+          tensor.dispose();
+        }))
+
     return estimationResultsBuffers.map(
         ([
           scoresBuffer, offsetsBuffer, displacementFwdBuffer,

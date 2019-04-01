@@ -2,7 +2,7 @@ import { Component } from "react";
 import { Labels, CameraDatasets } from "../types";
 import { connect } from 'react-redux';
 import { Dispatch, Action } from "redux";
-import * as actions from "../actions";
+import * as actions from "../activityActions";
 import { saveDatasets, loadDatasets} from "../classifierStorage";
 import { State } from "../reducers";
 import { getServerState, CamerasStatus } from "../serverApi";
