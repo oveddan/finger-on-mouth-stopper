@@ -30,6 +30,8 @@ export const classify = async (
 
   keypointsTensor.dispose();
 
+  // debugger;
+
   return prediction.classIndex;
 };
 

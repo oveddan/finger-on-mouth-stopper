@@ -44,12 +44,15 @@ export const toExample = (keypoints: [number, number][]) =>
 export const updateClassExamples =
     (classifier: KNNClassifier, dataset: DatasetObject, classId: number) => {
       const keypoints = dataset[classId];
+      // debugger;
       if (keypoints) {
         if (classifier.getClassifierDataset()[classId])
           classifier.clearClass(classId);
 
         tf.tidy(() => {keypoints.forEach(keypoint => {
-                  classifier.addExample(toExample(keypoint), classId);
+                  const example = toExample(keypoint);
+                  // debugger;
+                  classifier.addExample(example, classId);
                 })});
       }
     };
