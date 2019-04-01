@@ -26,8 +26,6 @@ type State = {
 
 const format = 'h:mm a';
 
-
-
 const ScheduleCreator = ({createSchedule, cameras, activities}: Props) => {
   const [state, setState] = useState<State>({
     startTimeOfDay: moment.default(),
@@ -51,59 +49,61 @@ const ScheduleCreator = ({createSchedule, cameras, activities}: Props) => {
   });
 
   return (
-    <form>
-      <div className="form-group">
-        <label>Start Time</label>
-        <select onChange={e => dayChanged(e.target.value as startDayOptions)}>
-          <option value='today'>Today</option>
-          <option value='tomorrow'>Tomorrow</option>
-        </select>
-        <TimePicker
-          showSecond={false}
-          value={state.startTimeOfDay}
-          onChange={value => startTimeChanged(value)}
-          className='xxx'
-          format={format}
-          use12Hours
-          inputReadOnly
-        />
-      </div>
-      <div className='form-group'>
-        <label>End Time</label>
-        <TimePicker
-          showSecond={false}
-          value={state.endTime}
-          onChange={value => setState({...state, endTime: value})}
-          className='xxx'
-          format={format}
-          use12Hours
-          inputReadOnly
-        />
-      </div>
-      <div className='form-group'>
-        <label>Duration per schedule entry in minutes </label>
-        <input type='number'
-          value={state.entryDurationMinutes}
-          onChange={e => setState({...state, entryDurationMinutes: +e.target.value})}
-          min={0}
-          max={60}
-        />
-      </div>
-      <div className='form-group'>
-        <label>Tasks:</label>
-        <ul>
-          {state.tasks.map((task, i) => (
-            <li key={i}>
-              <TaskView task={task} updateWeight={weight => updateWeight(i, weight)} />
-            </li>
-          ))}
-        </ul>
-      </div>
-      <button className='btn btn-primary'
-        onClick={() => createSchedule(generateRandomSchedule(toSchedulingParams(state)))}>
-          Generate schedule
-      </button>
-    </form>
+    <div className="row">
+      <form>
+        <div className="form-group">
+          <label>Start Time</label>
+          <select onChange={e => dayChanged(e.target.value as startDayOptions)}>
+            <option value='today'>Today</option>
+            <option value='tomorrow'>Tomorrow</option>
+          </select>
+          <TimePicker
+            showSecond={false}
+            value={state.startTimeOfDay}
+            onChange={value => startTimeChanged(value)}
+            className='xxx'
+            format={format}
+            use12Hours
+            inputReadOnly
+          />
+        </div>
+        <div className='form-group'>
+          <label>End Time</label>
+          <TimePicker
+            showSecond={false}
+            value={state.endTime}
+            onChange={value => setState({...state, endTime: value})}
+            className='xxx'
+            format={format}
+            use12Hours
+            inputReadOnly
+          />
+        </div>
+        <div className='form-group'>
+          <label>Duration per schedule entry in minutes </label>
+          <input type='number'
+            value={state.entryDurationMinutes}
+            onChange={e => setState({...state, entryDurationMinutes: +e.target.value})}
+            min={0}
+            max={60}
+          />
+        </div>
+        <div className='form-group'>
+          <label>Tasks:</label>
+          <ul>
+            {state.tasks.map((task, i) => (
+              <li key={i}>
+                <TaskView task={task} updateWeight={weight => updateWeight(i, weight)} />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <button className='btn btn-primary'
+          onClick={() => createSchedule(generateRandomSchedule(toSchedulingParams(state)))}>
+            Generate schedule
+        </button>
+      </form>
+    </div>
   );
 }
 

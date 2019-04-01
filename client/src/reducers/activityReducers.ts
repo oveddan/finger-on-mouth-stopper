@@ -43,7 +43,6 @@ const updateLabel = (activities: Activities = {}, id: number, text: string) => {
   return {...activities, [id]: text};
 };
 
-
 type ActivityActions = ActionType<typeof actions>;
 
 const activityReducer = (state = initialState, action: ActivityActions):
@@ -128,7 +127,8 @@ const activityReducer = (state = initialState, action: ActivityActions):
         case KEYPOINTS_ESTIMATED:
           return {
             ...state,
-            cameraKeypoints: {...state.cameraKeypoints, ...action.payload}
+            cameraKeypoints:
+                {...state.cameraKeypoints, ...action.payload.keypoints}
           };
         case CAMERA_STATUS_UPDATED:
           return {...state, cameras: action.payload};

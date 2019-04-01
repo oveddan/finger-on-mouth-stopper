@@ -64,7 +64,7 @@ const EditableClassifications = ({labels, getButtonClass, dataset = {}, updateLa
                 <i className="far fa-edit"></i>
               </button>
               <button type="button" key={id}
-                className={`btn ${getButtonClass(id)}`}
+                className={`btn btn-light`}
                 onClick={() => setState({editingClassId: id})} >
                 {`${name} (${dataset[id] ? dataset[id].length : 0})`}
               </button>

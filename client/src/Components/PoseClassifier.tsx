@@ -90,7 +90,6 @@ class Classifier extends Component<Props> {
 
     this.props.keypointsEstimated(results);
 
-
     return results;
   }
 
