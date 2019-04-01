@@ -17,7 +17,7 @@ export const initializeDataset =
         action(SET_DATASET, {camerasState, dataset, activities});
 
 export const clearDataset = (cameraId: number) =>
-    action(CLEAR_DATASET, cameraId);
+    action(CLEAR_DATASET, {cameraId});
 
 export const addLabel = (text: string) => action(ADD_LABEL, text);
 
@@ -25,10 +25,10 @@ export const updateLabel = (id: number, text: string) =>
     action(UPDATE_LABEL, {id, text})
 
 export const keypointsEstimated = (keypoints: CameraKeypoints) =>
-    action(KEYPOINTS_ESTIMATED, keypoints)
+    action(KEYPOINTS_ESTIMATED, {keypoints})
 
 export const updateCamerasStatus = (camerasStatus: CamerasStatus) =>
-    action(CAMERA_STATUS_UPDATED, camerasStatus)
+    action(CAMERA_STATUS_UPDATED, {camerasStatus})
 
 export const poseClassified = (cameraId: number, classId: number|null) =>
     action(ACTIVITY_CLASSIFIED, {classId, cameraId})
@@ -37,17 +37,15 @@ export const frameUpdated =
     (cameraId: number, frame: CameraFrameType, time: number) =>
         action(CAMERA_FRAME_UPDATED, {cameraId, frame, time})
 
-const actions = {
-  addExample,
-  deleteExample,
-  initializeDataset,
-  clearDataset,
-  addLabel,
-  updateLabel,
-  keypointsEstimated,
-  updateCamerasStatus,
-  frameUpdated
-};
-// export type RootAction = ActionType<ActionTypes>;
-
-export type Action = ActionType<typeof actions>;
+    // const actions = {
+    //   addExample,
+    //   deleteExample,
+    //   initializeDataset,
+    //   clearDataset,
+    //   addLabel,
+    //   updateLabel,
+    //   keypointsEstimated,
+    //   updateCamerasStatus,
+    //   frameUpdated
+    // };
+    // export type RootAction = ActionType<ActionTypes>;

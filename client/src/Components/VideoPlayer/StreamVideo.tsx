@@ -1,9 +1,10 @@
-import React, { Component, createRef, Dispatch } from "react";
+import React, { Component, createRef } from "react";
 import { CameraStatus, CamerasStatus, setRecording } from "../../serverApi";
 import { connect } from 'react-redux';
 import * as actions from "../../actions";
-import { Action } from '../../actions';
 import cx from 'classnames';
+import { bindActionCreators, Dispatch, Action } from "redux";
+import { RootAction } from "../../types";
 
 const UPDATE_DURATION = 250;
 
@@ -73,8 +74,8 @@ class StreamVideo extends Component<StreamVideoProps> {
 
 const mapStateToProps = () => ({})
 
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  updateCamerasStatus: (camerasStatus: CamerasStatus) => dispatch(actions.updateCamerasStatus(camerasStatus))
-});
+const mapDispatchToProps = {
+  updateCamerasStatus: actions.updateCamerasStatus
+};
 
 export default connect(mapStateToProps , mapDispatchToProps)(StreamVideo)

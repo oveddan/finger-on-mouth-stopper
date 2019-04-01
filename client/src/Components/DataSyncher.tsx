@@ -1,10 +1,9 @@
 import { Component } from "react";
 import { Labels, CameraDatasets } from "../types";
 import { connect } from 'react-redux';
-import { Dispatch } from "redux";
+import { Dispatch, Action } from "redux";
 import * as actions from "../actions";
 import { saveDatasets, loadDatasets} from "../classifierStorage";
-import { Action } from "../actions";
 import { State } from "../reducers";
 import { getServerState, CamerasStatus } from "../serverApi";
 
@@ -40,9 +39,9 @@ class DataSyncer extends Component<DataSyncerProps> {
   }
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  setDatasets: (cameras: CamerasStatus, dataset: CameraDatasets, activities: Labels) => dispatch(actions.initializeDataset(cameras, dataset, activities)),
-})
+const mapDispatchToProps = {
+  setDatasets: actions.initializeDataset,
+};
 
 const mapStateToProps = ({cameraDatasets, activities}: State) => ({
   cameraDatasets, activities});

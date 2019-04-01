@@ -119,10 +119,10 @@ const mapStateToProps = ({cameraClassifiers, cameraDatasets, frames}: State) => 
   cameraDatasets, cameraClassifiers, frames
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
-  keypointsEstimated: (keypoints: CameraKeypoints) => dispatch(actions.keypointsEstimated(keypoints)),
-  poseClassified: (cameraId: number, classId: number | null) => dispatch(actions.poseClassified(cameraId, classId))
-});
+const mapDispatchToProps = {
+  keypointsEstimated: actions.keypointsEstimated,
+  poseClassified: actions.poseClassified
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(Classifier);
 

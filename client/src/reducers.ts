@@ -104,9 +104,9 @@ const reducer = (state = initialState, action: Actions):
           }
         case CLEAR_DATASET:
           newDataset = {...cameraDatasets};
-          delete newDataset[action.payload];
+          delete newDataset[action.payload.cameraId];
 
-          state.cameraClassifiers[action.payload].clearAllClasses();
+          state.cameraClassifiers[action.payload.cameraId].clearAllClasses();
 
           return {
             ...state, cameraDatasets: newDataset

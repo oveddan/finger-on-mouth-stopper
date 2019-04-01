@@ -1,5 +1,8 @@
 import {KNNClassifier} from '@tensorflow-models/knn-classifier';
 import {Tensor2D} from '@tensorflow/tfjs';
+import {ActionType} from 'typesafe-actions';
+
+import * as actions from './actions';
 
 export type CameraFrameType = HTMLVideoElement|HTMLImageElement;
 
@@ -42,3 +45,5 @@ export type CameraClassifiers = {
 export type CameraClassifications = {
   [cameraId: number]: number|null
 };
+
+export type RootAction = ActionType<typeof import('./rootAction').default>;
