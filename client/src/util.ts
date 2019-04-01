@@ -52,7 +52,7 @@ export const updateClassExamples =
         tf.tidy(() => {keypoints.forEach(keypoint => {
                   const example = toExample(keypoint);
                   // debugger;
-                  classifier.addExample(example, classId);
+                  classifier.addExample(example, +classId);
                 })});
       }
     };
