@@ -2,7 +2,7 @@ import React from 'react';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import * as actions from '../activityActions';
-import { Labels, CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction } from '../types';
+import { Activities, CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction, CameraActivities } from '../types';
 import { CamerasStatus } from '../serverApi';
 import Classifications from './Classifications';
 import Pose from './Pose';
@@ -13,12 +13,12 @@ import { deleteExample } from '../util';
 interface Props {
   cameras: CamerasStatus,
   cameraDatasets: CameraDatasets,
-  activities: Labels,
+  activities: CameraActivities,
   cameraKeypoints: CameraKeypoints,
   classifications: CameraClassifications,
   clearDataset: (cameraId: number) => void,
-  addLabel: (id: number, text: string) => void,
-  updateLabel: (id: number, text: string) => void,
+  addLabel: (cameraId: number, text: string) => void,
+  updateLabel: (cameraId: number, id: number, text: string) => void,
   addExample: (clasId: number, cameaId: number) => void,
   deleteExample: (classId: number, example: number, cameraId: number) => void,
   frameUpdated: (cameraId: number, frame: CameraFrameType, time: number) => void
@@ -49,10 +49,10 @@ const CamerasAndClassifications = (props: Props) => (
                 deleteExample={(classId, example) => props.deleteExample(classId, example, cameraId)}
                 clearDataset={() => props.clearDataset(cameraId)}
                 dataset={props.cameraDatasets[cameraId]}
-                activities={props.activities}
+                activities={props.activities[cameraId]}
                 classId={props.classifications[cameraId]}
                 addLabel={label => props.addLabel(cameraId, label)}
-                updateLabel={props.updateLabel}
+                updateLabel={(id, text) => props.updateLabel(cameraId, id, text)}
               />
             </div>
           </div>
@@ -69,7 +69,8 @@ const mapStateToProps = ({activities: {cameras, cameraClassifiers, cameraDataset
 const mapDispatchToProps = {
   deleteExample: actions.deleteExample,
   clearDataset: actions.clearDataset,
-  addLabel: actions.updateLabel,
+  addLabel: actions.addLabel,
+  updateLabel: actions.updateLabel,
   addExample: actions.addExample,
   frameUpdated: actions.frameUpdated
 };

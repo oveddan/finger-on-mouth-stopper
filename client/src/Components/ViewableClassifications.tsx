@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { DatasetObject, Labels } from '../types';
+import { DatasetObject, Activities } from '../types';
 
 type Props = {
-  activities: Labels,
+  activities?: Activities,
   addExample: (id: number) => void,
   dataset?: DatasetObject,
   classifiedPose: number | null
@@ -40,7 +40,7 @@ const ViewableClassifications = ({activities = {}, classifiedPose, addExample, d
 
   return (
     <div>
-      {Object.keys(activities).map(id => (
+      {activities && Object.keys(activities).map(id => (
         <button type="button" key={+id}
           className={`btn ${getButtonClass(+id, classifiedPose, addingExample)}`}
           onClick={() => addExampleFn(+id)}

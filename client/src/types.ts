@@ -29,13 +29,17 @@ export type DatasetObject = {
   [classId: number]: Keypoints[]
 };
 
-export type Labels = {
+export type Activities = {
   [id: number]: string
 };
 
+export type CameraActivities = {
+  [cameraId: number]: Activities
+}
+
 export type StorageEntry = {
   dataset: CameraDatasets,
-  activities: Labels
+  activities: CameraActivities
 };
 
 export type CameraClassifiers = {

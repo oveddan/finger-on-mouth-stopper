@@ -4,7 +4,7 @@ import {ActionType, StateType} from 'typesafe-actions';
 import * as actions from './activityActions';
 import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from './constants';
 import {CamerasStatus} from './serverApi';
-import {CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraFrameType, CameraKeypoints, DatasetObject, Keypoints, Labels, RootAction} from './types';
+import {Activities, CameraActivities, CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraKeypoints} from './types';
 import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from './util';
 
 export type State = {
@@ -14,15 +14,10 @@ export type State = {
   readonly cameraClassifiers: CameraClassifiers,
   readonly cameras: CamerasStatus,
   // readonly cameraFrames: CameraFrameType[],
-  readonly activities: Labels,
+  readonly activities: CameraActivities,
   readonly frames: CameraFrames,
   readonly classifications: CameraClassifications
 };
-
-const defaultActivities = [
-  'at desk', 'on yoga matt', 'on phone in bed', 'in bed', 'eating',
-  'doing dishes', 'meditating'
-];
 
 const initialState: State = {
   cameraDatasets: {},
@@ -30,25 +25,28 @@ const initialState: State = {
   cameras: {},
   frames: {},
   classifications: {},
-  activities: defaultActivities.reduce(
-      (result: {[id: number]: string}, activity, id):
-          {[id: number]: string} => {
-            result[id] = activity;
-            return result;
-          },
-      {}),
+  activities: {},
   cameraKeypoints: []
 };
 
 const max = (values: number[]) =>
     values.reduce((result, value) => Math.max(value, result), 0);
 
-const nextActivityId = (activities: Labels) =>
+const nextActivityId = (activities: Activities) =>
     max(Object.keys(activities).map(x => +x)) + 1;
+
+const addLabel = (activities: Activities = {}, text: string) => {
+  return {...activities, [nextActivityId(activities)]: text};
+};
+
+const updateLabel = (activities: Activities = {}, id: number, text: string) => {
+  return {...activities, [id]: text};
+};
+
 
 type ActivityActions = ActionType<typeof actions>;
 
-const reducer = (state = initialState, action: ActivityActions):
+const activityReducer = (state = initialState, action: ActivityActions):
     State => {
       const {cameraKeypoints, cameraDatasets, activities} = state;
       let newDataset;
@@ -85,39 +83,48 @@ const reducer = (state = initialState, action: ActivityActions):
               state.cameraClassifiers[cameraId], newDataset, classId);
 
           return {
-            ...state, cameraDatasets: {
+            ...state,
+            cameraDatasets: {
               ...cameraDatasets,
               [cameraId]: newDataset,
             }
-          }
+          };
         case SET_DATASET:
           return {
-            ...state, cameras: action.payload.camerasState,
-                cameraDatasets: action.payload.dataset,
-                activities: action.payload.activities,
-                cameraClassifiers: setClassifiersExamples(
-                    action.payload.camerasState, state.cameraClassifiers,
-                    action.payload.dataset)
-          }
+            ...state,
+            cameras: action.payload.camerasState,
+            cameraDatasets: action.payload.dataset,
+            activities: action.payload.activities,
+            cameraClassifiers: setClassifiersExamples(
+                action.payload.camerasState, state.cameraClassifiers,
+                action.payload.dataset)
+          };
         case CLEAR_DATASET:
           newDataset = {...cameraDatasets};
           delete newDataset[action.payload.cameraId];
 
           state.cameraClassifiers[action.payload.cameraId].clearAllClasses();
 
-          return {
-            ...state, cameraDatasets: newDataset
-          }
+          return {...state, cameraDatasets: newDataset};
         case ADD_LABEL:
-          const newId = nextActivityId(activities);
-          return {
-            ...state, activities: {...activities, [newId]: action.payload}
-          }
-        case UPDATE_LABEL:
+          var {cameraId, text} = action.payload;
+
+          const newCameraActivities = addLabel(activities[cameraId], text);
+          console.log('new activities', newCameraActivities);
           return {
             ...state,
-            activities:
-                {...activities, [action.payload.id]: action.payload.text}
+            activities: {...state.activities, [cameraId]: newCameraActivities}
+          };
+        case UPDATE_LABEL:
+          const updatedCameraActivities = updateLabel(
+              activities[action.payload.cameraId], action.payload.id,
+              action.payload.text);
+          return {
+            ...state,
+            activities: {
+              ...activities,
+              [action.payload.cameraId]: updatedCameraActivities
+            }
           };
         case KEYPOINTS_ESTIMATED:
           return {
@@ -147,6 +154,6 @@ const reducer = (state = initialState, action: ActivityActions):
       }
     }
 
-export type RootState = StateType<typeof reducer>;
+export type RootState = StateType<typeof activityReducer>;
 
-export default reducer;
+export default activityReducer;

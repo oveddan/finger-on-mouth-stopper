@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import EditClassKeypoints from './EditClassKeypoints';
-import { Keypoints, DatasetObject, Labels } from '../types';
+import { Keypoints, DatasetObject, Activities } from '../types';
 
 type State = {
   editingClassId?: number,
@@ -9,7 +9,7 @@ type State = {
 }
 
 type Props = {
-  labels: Labels,
+  labels?: Activities,
   getButtonClass: (id: number) => string,
   updateLabel: (id: number, label: string) => void,
   addLabel: (label: string) => void,
@@ -45,7 +45,7 @@ const EditableClassifications = ({labels, getButtonClass, dataset = {}, updateLa
 
   return (
     <div>
-      {Object.keys(labels).map(idString => {
+      {labels && Object.keys(labels).map(idString => {
         const id = +idString;
         const name = labels[id];
         if(editingClassId === id && editingLabel)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DatasetObject, Labels } from '../types';
+import { DatasetObject, Activities } from '../types';
 import EditableClassifications from './EditableClassifications';
 import ViewableClassifications from './ViewableClassifications';
 import cx from 'classnames';
@@ -7,7 +7,7 @@ import cx from 'classnames';
 interface Props {
   cameraId: number,
   dataset?: DatasetObject,
-  activities: Labels,
+  activities?: Activities,
   clearDataset: () => void,
   addLabel: (text: string) => void,
   updateLabel: (id: number, text: string) => void,
