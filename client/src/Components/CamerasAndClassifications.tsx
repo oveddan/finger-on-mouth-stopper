@@ -62,7 +62,7 @@ const CamerasAndClassifications = (props: Props) => (
   </div>
 )
 
-const mapStateToProps = ({cameras, cameraClassifiers, cameraDatasets, activities, cameraKeypoints, classifications}: State) => ({
+const mapStateToProps = ({activities: {cameras, cameraClassifiers, cameraDatasets, activities, cameraKeypoints, classifications}}: State) => ({
   cameras, cameraDatasets, activities, cameraKeypoints, cameraClassifiers, classifications
 });
 

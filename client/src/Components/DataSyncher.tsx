@@ -43,7 +43,7 @@ const mapDispatchToProps = {
   setDatasets: actions.initializeDataset,
 };
 
-const mapStateToProps = ({cameraDatasets, activities}: State) => ({
+const mapStateToProps = ({activities: {cameraDatasets, activities}}: State) => ({
   cameraDatasets, activities});
 
 export default connect(mapStateToProps, mapDispatchToProps)(DataSyncer);

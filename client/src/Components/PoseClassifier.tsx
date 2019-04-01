@@ -115,7 +115,7 @@ class Classifier extends Component<Props> {
   }
 }
 
-const mapStateToProps = ({cameraClassifiers, cameraDatasets, frames}: State) => ({
+const mapStateToProps = ({activities: {cameraClassifiers, cameraDatasets, frames}}: State) => ({
   cameraDatasets, cameraClassifiers, frames
 });
 
