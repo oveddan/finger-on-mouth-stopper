@@ -2,9 +2,9 @@ import {PoseNet} from '@tensorflow-models/posenet';
 import {ActionType, StateType} from 'typesafe-actions';
 
 import * as actions from '../actions/activityActions';
-import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from '../constants';
+import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL, VIDEO_SOURCE_CHANGED} from '../constants';
 import {CamerasStatus} from '../serverApi';
-import {Activities, CameraActivities, CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraKeypoints} from '../types';
+import {Activities, CameraActivities, CameraClassifications, CameraClassifiers, CameraDatasets, CameraFrames, CameraKeypoints, CameraVideoSources} from '../types';
 import {addKeypointsToDataset, deleteExample, setClassifiersExamples, updateClassExamples} from '../util';
 
 export type State = {
@@ -16,7 +16,8 @@ export type State = {
   // readonly cameraFrames: CameraFrameType[],
   readonly activities: CameraActivities,
   readonly frames: CameraFrames,
-  readonly classifications: CameraClassifications
+  readonly classifications: CameraClassifications,
+  readonly videoSources: CameraVideoSources
 };
 
 const initialState: State = {
@@ -26,6 +27,7 @@ const initialState: State = {
   frames: {},
   classifications: {},
   activities: {},
+  videoSources: {},
   cameraKeypoints: []
 };
 
@@ -49,8 +51,6 @@ const activityReducer = (state = initialState, action: ActivityActions):
     State => {
       const {cameraKeypoints, cameraDatasets, activities} = state;
       let newDataset;
-
-      console.log('state action', state, action);
 
       switch (action.type) {
         case ADD_EXAMPLE:
@@ -146,6 +146,16 @@ const activityReducer = (state = initialState, action: ActivityActions):
             ...state, classifications: {
               ...state.classifications,
               [action.payload.cameraId]: action.payload.classification
+            }
+          }
+        case VIDEO_SOURCE_CHANGED:
+          return {
+            ...state, videoSources: {
+              ...state.videoSources,
+              [action.payload.cameraId]: {
+                source: action.payload.videoSource,
+                videoUrl: action.payload.videoUrl
+              }
             }
           }
         default:

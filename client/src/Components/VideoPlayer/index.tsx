@@ -3,87 +3,70 @@ import { CameraStatus } from '../../serverApi';
 import StreamVideo from './StreamVideo';
 import ExistingVideo from './ExistingVideo';
 import WebcamVideo from './WebcamVideo';
-
-const WEBCAM = 'Webcam';
-const STREAM = 'Stream';
-const EXISTING_VIDEO = 'ExistingVideo'
-
-type State = {
-  cameraSource: 'Webcam' | 'Stream' | 'ExistingVideo',
-  videoUrl: string,
-};
+import { CameraVideoSource, VideoSource, CameraFrameType } from '../../types';
+import * as actions from '../../actions/activityActions';
 
 type Props = {
-  frameChanged: (video: HTMLVideoElement | HTMLImageElement) => void,
-  camera: CameraStatus,
+  frameChanged: typeof actions.frameUpdated,
+  videoSourceChanged: typeof actions.videoSourceChanged,
+  camera?: CameraStatus,
   cameraId: number,
+  cameraVideoSource?: CameraVideoSource
 };
 
 
-export default class VideoPlayer extends Component<Props, State> {
-  state: State = {
-    cameraSource: EXISTING_VIDEO,
-    videoUrl: process.env.PUBLIC_URL + '/captureDay2.mp4'
-  }
+export const VideoPlayer = ({frameChanged, camera, cameraId, cameraVideoSource, videoSourceChanged} : Props) =>  {
+  const cameraFrameChanged = (frame: CameraFrameType) => frameChanged(cameraId, frame, new Date().getTime())
 
-  handleWebcamClicked = async () => {
-    this.setState({
-      cameraSource: WEBCAM
-    });
-  }
+  const { source, videoUrl } = cameraVideoSource || { source: VideoSource.EXISTING_VIDEO, videoUrl: process.env.PUBLIC_URL + '/captureDay2.mp4'}
 
-  handleVideoClicked = () => {
-    this.setState({
-      cameraSource: EXISTING_VIDEO
-    })
-  }
-
-  handleStreamClicked = () => {
-    this.setState({cameraSource: STREAM});
-  }
-
-  handleUrlChanged = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      videoUrl: e.target.value
-    });
-  }
-
-  render() {
-    return (
-      <div>
-        <div className="input-group mb-3">
-          <div className="input-group-prepend" id="button-addon3">
-            <button key={1} className={`btn ${buttonClass(this.state.cameraSource === WEBCAM)}`} type="button" onClick={this.handleWebcamClicked}>Webcam</button>
-            <button key={2} className={`btn ${buttonClass(this.state.cameraSource === STREAM)}`} type="button" onClick={this.handleStreamClicked}>Stream</button>
-            <button key={3} className={`btn ${buttonClass(this.state.cameraSource === EXISTING_VIDEO)}`} type="button" onClick={this.handleVideoClicked}>Existing Video</button>
-          </div>
-          <input type="text"
-            className="form-control"
-            placeholder=""
-            aria-describedby="button-addon3"
-            disabled={this.state.cameraSource === WEBCAM}
-            value={this.state.videoUrl}
-            onChange={this.handleUrlChanged}
-           />
+  return (
+    <div>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend" id="button-addon3">
+          <button key={1}
+            className={`btn ${buttonClass(source === VideoSource.WEBCAM)}`}
+            type="button"
+            onClick={() => videoSourceChanged(cameraId, VideoSource.WEBCAM)}>
+            Webcam
+          </button>
+          <button
+            key={2}
+            className={`btn ${buttonClass(source === VideoSource.STREAM)}`}
+            type="button"
+            onClick={() => videoSourceChanged(cameraId, VideoSource.STREAM)}>Stream</button>
+          <button key={3}
+            className={`btn ${buttonClass(source === VideoSource.EXISTING_VIDEO)}`}
+            type="button"
+            onClick={() => videoSourceChanged(cameraId, VideoSource.EXISTING_VIDEO, videoUrl)}>Existing Video</button>
         </div>
-        {this.state.cameraSource === EXISTING_VIDEO && (
-          <ExistingVideo url={this.state.videoUrl} frameChanged={this.props.frameChanged} />
-        )}
-        {this.state.cameraSource === STREAM && (
-          <StreamVideo
-            cameraId={this.props.cameraId}
-            camera={this.props.camera}
-            frameChanged={this.props.frameChanged}
+        <input type="text"
+          className="form-control"
+          placeholder=""
+          aria-describedby="button-addon3"
+          disabled={source !== VideoSource.EXISTING_VIDEO}
+          value={videoUrl}
+          onChange={({target}) => videoSourceChanged(cameraId, VideoSource.EXISTING_VIDEO, target.value)}
           />
-        )}
-        {this.state.cameraSource === WEBCAM && (
-          <WebcamVideo frameChanged={this.props.frameChanged}/>
-        )}
       </div>
-    )
-  }
+      {source === VideoSource.EXISTING_VIDEO && videoUrl && (
+        <ExistingVideo url={videoUrl} frameChanged={cameraFrameChanged} />
+      )}
+      {source === VideoSource.STREAM && camera && (
+        <StreamVideo
+          cameraId={cameraId}
+          camera={camera}
+          frameChanged={cameraFrameChanged}
+        />
+      )}
+      {source === VideoSource.WEBCAM && (
+        <WebcamVideo frameChanged={cameraFrameChanged}/>
+      )}
+    </div>
+  )
 }
 
+export default VideoPlayer;
 const buttonClass = (isActive: boolean) => isActive ? "btn-outline-primary" : "btn-outline-secondary"
 
 

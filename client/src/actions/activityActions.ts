@@ -1,8 +1,8 @@
 import {action} from 'typesafe-actions';
 
-import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL} from '../constants';
+import {ACTIVITY_CLASSIFIED, ADD_EXAMPLE, ADD_LABEL, CAMERA_FRAME_UPDATED, CAMERA_STATUS_UPDATED, CLEAR_DATASET, DELETE_EXAMPLE, KEYPOINTS_ESTIMATED, SET_DATASET, UPDATE_LABEL, VIDEO_SOURCE_CHANGED} from '../constants';
 import {CamerasStatus} from '../serverApi';
-import {CameraActivities, CameraClassification, CameraDatasets, CameraFrameType, CameraKeypoints} from '../types';
+import {CameraActivities, CameraClassification, CameraDatasets, CameraFrameType, CameraKeypoints, VideoSource} from '../types';
 
 export const addExample = (classId: number, cameraId: number) =>
     action(ADD_EXAMPLE, {classId, cameraId})
@@ -38,3 +38,7 @@ export const poseClassified =
 export const frameUpdated =
     (cameraId: number, frame: CameraFrameType, time: number) =>
         action(CAMERA_FRAME_UPDATED, {cameraId, frame, time})
+
+export const videoSourceChanged =
+    (cameraId: number, videoSource: VideoSource, videoUrl?: string) =>
+        action(VIDEO_SOURCE_CHANGED, {cameraId, videoSource, videoUrl})

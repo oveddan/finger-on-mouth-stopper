@@ -80,3 +80,18 @@ export enum ComplianceStatus {
   COMPLYING = 'COMPLYING',
   NOT_SURE = 'NOT_SURE'
 }
+
+export type CameraVideoSource = {
+  source: VideoSource,
+  videoUrl?: string
+}
+
+export type CameraVideoSources = {
+  [cameraId: number]: CameraVideoSource
+}
+
+export enum VideoSource {
+  WEBCAM = 'Webcam',
+  STREAM = 'Stream',
+  EXISTING_VIDEO = 'ExistingVideo'
+}

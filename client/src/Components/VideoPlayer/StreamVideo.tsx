@@ -6,7 +6,7 @@ import cx from 'classnames';
 import { bindActionCreators, Dispatch, Action } from "redux";
 import { RootAction } from "../../types";
 
-const UPDATE_DURATION = 250;
+const UPDATE_DURATION = 50;
 
 const CAMERA_HOST = 'http://localhost:5000'
 
@@ -17,9 +17,16 @@ type StreamVideoProps = {
   updateCamerasStatus: (camerasStatus: CamerasStatus) => void
 }
 
+
 class StreamVideo extends Component<StreamVideoProps> {
   imageRef = createRef<HTMLImageElement>();
   updateInterval?: NodeJS.Timeout;
+
+  state: {
+    showDelayFinished: boolean
+  } = {
+    showDelayFinished: false
+  };
 
   imageLoaded = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setTimeout(() => {
@@ -41,8 +48,17 @@ class StreamVideo extends Component<StreamVideoProps> {
     }, UPDATE_DURATION);
   }
 
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({
+        showDelayFinished: true
+      })
+    }, 1000);
+  }
+
   componentWillUnmount() {
     if (this.updateInterval) {
+      console.log('clearing interval');
       clearInterval(this.updateInterval);
     }
   }
@@ -62,6 +78,8 @@ class StreamVideo extends Component<StreamVideoProps> {
 
   render() {
     const buttonClass = cx(['btn', {['btn-primary']:this.isRecording()}]);
+
+    if (!this.state.showDelayFinished) return null;
 
     return (
       <div>

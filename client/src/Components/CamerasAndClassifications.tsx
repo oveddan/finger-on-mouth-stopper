@@ -2,7 +2,7 @@ import React from 'react';
 import { State } from '../reducers';
 import { connect } from 'react-redux';
 import * as actions from '../actions/activityActions';
-import { CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction, CameraActivities } from '../types';
+import { CameraKeypoints, CameraDatasets, CameraFrameType, CameraClassifications, RootAction, CameraActivities, CameraVideoSources } from '../types';
 import { CamerasStatus } from '../serverApi';
 import Classifications from './Classifications';
 import Pose from './Pose';
@@ -15,12 +15,14 @@ interface Props {
   activities: CameraActivities,
   cameraKeypoints: CameraKeypoints,
   classifications: CameraClassifications,
-  clearDataset: (cameraId: number) => void,
-  addLabel: (cameraId: number, text: string) => void,
-  updateLabel: (cameraId: number, id: number, text: string) => void,
-  addExample: (clasId: number, cameaId: number) => void,
-  deleteExample: (classId: number, example: number, cameraId: number) => void,
-  frameUpdated: (cameraId: number, frame: CameraFrameType, time: number) => void
+  videoSources: CameraVideoSources,
+  clearDataset: typeof actions.clearDataset,
+  addLabel: typeof actions.addLabel,
+  updateLabel: typeof actions.updateLabel,
+  addExample: typeof actions.addExample,
+  deleteExample: typeof actions.deleteExample,
+  frameUpdated: typeof actions.frameUpdated,
+  videoSourceChanged: typeof actions.videoSourceChanged
 }
 
 const CamerasAndClassifications = (props: Props) => (
@@ -34,9 +36,11 @@ const CamerasAndClassifications = (props: Props) => (
             <h2>{props.cameras[cameraId].name}</h2>
               <div className="row">
                 <VideoPlayer
-                  frameChanged={(frame) => props.frameUpdated(cameraId, frame, new Date().getTime())}
-                    cameraId={cameraId}
-                    camera={props.cameras[cameraId]}
+                  frameChanged={props.frameUpdated}
+                  cameraId={cameraId}
+                  camera={props.cameras[cameraId]}
+                  cameraVideoSource={props.videoSources[cameraId]}
+                  videoSourceChanged={props.videoSourceChanged}
                 />
             </div>
             <div className="row">
@@ -64,8 +68,8 @@ const CamerasAndClassifications = (props: Props) => (
   </div>
 )
 
-const mapStateToProps = ({activities: {cameras, cameraClassifiers, cameraDatasets, activities, cameraKeypoints, classifications}}: State) => ({
-  cameras, cameraDatasets, activities, cameraKeypoints, cameraClassifiers, classifications
+const mapStateToProps = ({activities: {cameras, cameraClassifiers, cameraDatasets, activities, cameraKeypoints, classifications, videoSources}}: State) => ({
+  cameras, cameraDatasets, activities, cameraKeypoints, cameraClassifiers, classifications, videoSources
 });
 
 const mapDispatchToProps = {
@@ -74,8 +78,8 @@ const mapDispatchToProps = {
   addLabel: actions.addLabel,
   updateLabel: actions.updateLabel,
   addExample: actions.addExample,
-  frameUpdated: actions.frameUpdated
+  frameUpdated: actions.frameUpdated,
+  videoSourceChanged: actions.videoSourceChanged
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(CamerasAndClassifications);
-
