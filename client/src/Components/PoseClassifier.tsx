@@ -22,6 +22,7 @@ interface Props {
   poseClassified: typeof actions.poseClassified
 };
 
+const minPoseConfidence = 0.1
 class Classifier extends Component<Props> {
 
   endAddingExampleTimeout?: number;
@@ -36,7 +37,7 @@ class Classifier extends Component<Props> {
   };
 
   async componentDidMount() {
-    const net = await batchPoseNet.load(1.00);
+    const net = await batchPoseNet.load(0.75);
 
     this.setState({posenetModel: net})
 
@@ -83,7 +84,11 @@ class Classifier extends Component<Props> {
     if (!this.state.posenetModel)
       return {};
 
-    const results = await performPoseEstimation(this.state.posenetModel, this.props.frames);
+    const results = await performPoseEstimation(
+      this.state.posenetModel,
+      this.props.frames,
+      minPoseConfidence
+    );
 
     this.performingEstimation = false;
 

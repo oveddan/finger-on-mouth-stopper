@@ -8,8 +8,15 @@ import {CameraClassification, CameraFrames, CameraKeypoints, DatasetObject, Keyp
 import {toExample} from './util';
 
 export const extractAndNormalizeKeypoints =
-    (poses: posenet.Pose[], input: tf.Tensor3D): Keypoints|undefined => {
+    (poses: posenet.Pose[], input: tf.Tensor3D,
+     minPoseConfidence: number): Keypoints|undefined => {
       if (poses.length === 0) {
+        return undefined;
+      }
+
+      const firstPose = poses[0];
+
+      if (firstPose.score < minPoseConfidence) {
         return undefined;
       }
 
@@ -40,32 +47,36 @@ export const classify = async(
 
 const imageScaleFactor = 1;
 const outputStride = 16;
-export const performPoseEstimation =
-    async(posenetModel: batchPoseNet.BatchPoseNet, frames: CameraFrames):
-        Promise<CameraKeypoints> => {
-          const results: CameraKeypoints = {};
+export const performPoseEstimation = async(
+    posenetModel: batchPoseNet.BatchPoseNet, frames: CameraFrames,
+    minPoseConfidence: number): Promise<CameraKeypoints> => {
+  const results: CameraKeypoints = {};
 
-          if (posenetModel) {
-            const tensors: {[cameraId: number]: Tensor3D} = {};
+  if (posenetModel) {
+    const tensors: {[cameraId: number]: Tensor3D} = {};
 
-            Object.keys(frames).forEach(id => {
-              const frame = frames[+id];
+    Object.keys(frames).forEach(id => {
+      const frame = frames[+id];
 
-              if (frame) {
-                tensors[+id] = tf.browser.fromPixels(frame.frame);
-              }
-            })
+      if (frame) {
+        try {
+          tensors[+id] = tf.browser.fromPixels(frame.frame);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    })
 
-            const allFramesPoses = await posenetModel.estimateMultiplePoses(
-                Object.values(tensors), 1, false, 8)
+    const allFramesPoses = await posenetModel.estimateMultiplePoses(
+        Object.values(tensors), 1, false, 8)
 
-            Object.keys(tensors).forEach((id, index) => {
-              results[+id] = extractAndNormalizeKeypoints(
-                  allFramesPoses[index], tensors[+id]);
-            })
+    Object.keys(tensors).forEach((id, index) => {
+      results[+id] = extractAndNormalizeKeypoints(
+          allFramesPoses[index], tensors[+id], minPoseConfidence);
+    })
 
-            Object.values(tensors).forEach(tensor => tensor.dispose());
-          }
+    Object.values(tensors).forEach(tensor => tensor.dispose());
+  }
 
-          return results;
-        };
+  return results;
+};
