@@ -145,7 +145,7 @@ const activityReducer = (state = initialState, action: ActivityActions):
           return {
             ...state, classifications: {
               ...state.classifications,
-              [action.payload.cameraId]: action.payload.classId
+              [action.payload.cameraId]: action.payload.classification
             }
           }
         default:

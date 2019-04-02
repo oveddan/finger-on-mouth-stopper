@@ -1,14 +1,17 @@
+import * as moment from 'moment'
 import {ActionType} from 'typesafe-actions';
 
 import * as actions from '../actions/schedulingActions';
-import {SCHEDULE_CLEARED, SCHEDULE_CREATED} from '../constants';
+import {SCHEDULE_CLEARED, SCHEDULE_CREATED, TIME_ADVANCED} from '../constants';
 import {Schedule} from '../types';
 
 export type State = {
-  readonly schedule?: Schedule
-}
+  readonly schedule?: Schedule, readonly currentTime: moment.Moment
+};
 
-const initialState = {};
+const initialState = {
+  currentTime: moment.default()
+};
 
 type SchedulingActions = ActionType<typeof actions>;
 
@@ -23,6 +26,8 @@ const schedulingReducer =
           return {
             ...state, schedule: undefined
           }
+        case TIME_ADVANCED:
+          return {...state, currentTime: action.payload.time};
         default:
           return state;
       }

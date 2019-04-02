@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { DatasetObject, Activities } from '../types';
+import { DatasetObject, Activities, CameraClassification } from '../types';
 import EditableClassifications from './EditableClassifications';
 import ViewableClassifications from './ViewableClassifications';
-import cx from 'classnames';
 
 interface Props {
   cameraId: number,
+  classification: CameraClassification | null,
   dataset?: DatasetObject,
   activities?: Activities,
   clearDataset: () => void,
   addLabel: (text: string) => void,
   updateLabel: (id: number, text: string) => void,
   addExample: (clasId: number) => void,
-  deleteExample: (classId: number, example: number) => void,
-  classId: number | null
+  deleteExample: (classId: number, example: number) => void
 };
 
 type State = {
@@ -51,7 +50,7 @@ const Classifications = (props: Props) => {
           activities={props.activities}
           dataset={props.dataset}
           addExample={props.addExample}
-          classifiedPose={props.classId}
+          classifiedPose={props.classification ? props.classification.classId : null}
         />
 
       )}

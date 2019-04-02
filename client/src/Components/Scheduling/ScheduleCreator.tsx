@@ -135,7 +135,6 @@ const toSchedulingParams = (state: State): SchedulingParams => {
   const startTime = addTimeOfDay(startDay, state.startTimeOfDay);
   const endTime = addTimeOfDay(startDay, state.endTime);
 
-  debugger;
   return {
     startTime,
     endTime,

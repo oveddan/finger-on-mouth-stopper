@@ -1,6 +1,7 @@
 import {KNNClassifier} from '@tensorflow-models/knn-classifier';
 import {Tensor2D} from '@tensorflow/tfjs';
 import * as moment from 'moment';
+import {number} from 'prop-types';
 import {ActionType} from 'typesafe-actions';
 
 export type CameraFrameType = HTMLVideoElement|HTMLImageElement;
@@ -47,8 +48,13 @@ export type CameraClassifiers = {
   [cameraId: number]: KNNClassifier
 }
 
+export type CameraClassification = {
+  classId: number,
+  score: number
+}|null;
+
 export type CameraClassifications = {
-  [cameraId: number]: number|null
+  [cameraId: number]: CameraClassification
 };
 
 export type RootAction = ActionType<typeof import('./actions').default>;
@@ -67,3 +73,10 @@ export type ScheduleEntry = {
 export type Schedule = {
   [entryId: number]: ScheduleEntry
 };
+
+export enum ComplianceStatus {
+  NO_ACTIVITY_SCHEDULED = 'NO ACTIVITY SCHEDULE',
+  NOT_COMPLYING = 'NOT COMPLYING',
+  COMPLYING = 'COMPLYING',
+  NOT_SURE = 'NOT_SURE'
+}

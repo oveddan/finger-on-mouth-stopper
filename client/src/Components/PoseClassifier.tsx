@@ -6,7 +6,6 @@ import * as batchPoseNet from '../batchPoseNet';
 import { Keypoints, CameraFrameType, CameraDatasets, CameraClassifiers, CameraKeypoints, CameraFrames } from '../types';
 
 import { State } from '../reducers';
-import { Dispatch, Action } from 'redux';
 import { connect } from 'react-redux';
 import { performPoseEstimation, classify } from '../estimation';
 
@@ -19,8 +18,8 @@ interface Props {
       updateTime: number
     }
   },
-  keypointsEstimated: (keypoints: CameraKeypoints) => void,
-  poseClassified: (cameraId: number, classId: number | null) => void
+  keypointsEstimated: typeof actions.keypointsEstimated,
+  poseClassified: typeof actions.poseClassified
 };
 
 class Classifier extends Component<Props> {
@@ -97,20 +96,14 @@ class Classifier extends Component<Props> {
     const classifier = this.props.cameraClassifiers[cameraId];
     const dataset = this.props.cameraDatasets[cameraId];
     if (classifier && dataset) {
-      const classId = await classify(classifier, dataset, keypoints);
+      const cameraClassification = await classify(classifier, dataset, keypoints);
 
-      this.props.poseClassified(cameraId, classId);
+      this.props.poseClassified(cameraId, cameraClassification);
     }
   }
 
   render() {
-    return (
-      <div>
-        {Object.values(this.props.frames).map(frame => (
-          <div>{frame.updateTime}</div>
-        ))}
-      </div>
-    )
+    return null;
   }
 }
 

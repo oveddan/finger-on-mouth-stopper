@@ -4,7 +4,7 @@ import * as tf from '@tensorflow/tfjs';
 import {Tensor3D} from '@tensorflow/tfjs';
 
 import * as batchPoseNet from './batchPoseNet';
-import {CameraFrames, CameraKeypoints, DatasetObject, Keypoints} from './types';
+import {CameraClassification, CameraFrames, CameraKeypoints, DatasetObject, Keypoints} from './types';
 import {toExample} from './util';
 
 export const extractAndNormalizeKeypoints =
@@ -19,20 +19,23 @@ export const extractAndNormalizeKeypoints =
           ({position: {x, y}}): [number, number] => ([x / width, y / height]));
     };
 
-export const classify = async (
+export const classify = async(
     classifier: KNNClassifier, dataset: DatasetObject,
-    keypoints: Keypoints) => {
+    keypoints: Keypoints): Promise<CameraClassification|null> => {
   if (Object.keys(dataset).length === 0) return null;
 
   const keypointsTensor = toExample(keypoints);
 
-  const prediction = await classifier.predictClass(keypointsTensor);
+  const {classIndex, confidences} =
+      await classifier.predictClass(keypointsTensor);
+
+  const score = classIndex !== -1 ? confidences[classIndex] : 0;
 
   keypointsTensor.dispose();
 
   // debugger;
 
-  return prediction.classIndex;
+  return {classId: classIndex, score};
 };
 
 const imageScaleFactor = 1;
