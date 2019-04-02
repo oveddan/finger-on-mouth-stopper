@@ -14,15 +14,24 @@ type Props = {
   cameraVideoSource?: CameraVideoSource
 };
 
+const defaultVideoUrl = (cameraId: number) => {
+  switch(cameraId) {
+    case 0:
+      return '/kitchen/8.mp4';
+    default:
+      return '/captureDay2.mp4'
+  }
+}
+
 
 export const VideoPlayer = ({frameChanged, camera, cameraId, cameraVideoSource, videoSourceChanged} : Props) =>  {
   const cameraFrameChanged = (frame: CameraFrameType) => frameChanged(cameraId, frame, new Date().getTime())
 
-  const { source, videoUrl } = cameraVideoSource || { source: VideoSource.EXISTING_VIDEO, videoUrl: process.env.PUBLIC_URL + '/captureDay2.mp4'}
+  const { source, videoUrl } = cameraVideoSource || { source: VideoSource.EXISTING_VIDEO, videoUrl: defaultVideoUrl(cameraId) }
 
   return (
     <div>
-      <div className="input-group mb-3">
+      <div className="input-group">
         <div className="input-group-prepend" id="button-addon3">
           <button key={1}
             className={`btn ${buttonClass(source === VideoSource.WEBCAM)}`}

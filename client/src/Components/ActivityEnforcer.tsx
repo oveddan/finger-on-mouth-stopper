@@ -14,22 +14,28 @@ type Props = {
 }
 
 const ActivityEnforcer = ({ scheduledEntry, currentClassification, complianceStatus }: Props) => (
-  <div className='row'>
-    <div className='col-sm'>
-      {scheduledEntry && (
-        <div>
-          <h4>Current scheduled activity: {scheduledEntry.activity}</h4>
-          Activity will end&nbsp;
-          {scheduledEntry.scheduleEntry.end.fromNow()}
-        </div>
-      )}
-      {!currentClassification && 'No current activity...'}
-      {currentClassification && (
-        `Current Activity: ${currentClassification.label}`
-      )}
-      {scheduledEntry && (
-        <ComplianceNotifier scheduledEntry={scheduledEntry} currentClassification={currentClassification} complianceStatus={complianceStatus} />
-      )}
+  <div>
+    <div className='row'>
+      <div className='col'>
+        {scheduledEntry && (
+          <div>
+            <h4>You should be {scheduledEntry.activity}
+              <small className="text-muted">
+                &nbsp;&nbsp;activity will end&nbsp;
+                  {scheduledEntry.scheduleEntry.end.fromNow()}
+              </small>
+            </h4>
+
+          </div>
+        )}
+      </div>
+    </div>
+    <div className='row'>
+      <div className='col'>
+        {scheduledEntry && (
+          <ComplianceNotifier scheduledEntry={scheduledEntry} currentClassification={currentClassification} complianceStatus={complianceStatus} />
+        )}
+      </div>
     </div>
   </div>
 );
@@ -43,13 +49,19 @@ type ComplianceNotifierProps = {
 const ComplianceNotifier = ({scheduledEntry, complianceStatus, currentClassification}: ComplianceNotifierProps) => (
   <div>
     {complianceStatus === ComplianceStatus.COMPLYING && (
-      'Thank you for doing what I asked :)'
+      <div className="alert alert-success" role="alert">
+        {`Thank you for ${scheduledEntry.activity}`}
+      </div>
     )}
     {complianceStatus === ComplianceStatus.NOT_COMPLYING && (
-      `You're not ${scheduledEntry.activity}!`
+      <div className="alert alert-danger" role="alert">
+        {`You should be ${scheduledEntry.activity} but instead you are ${currentClassification && currentClassification.label}!`}
+      </div>
     )}
     {complianceStatus === ComplianceStatus.NOT_SURE && (
-      `I can't see you...where are you hiding?`
+      <div className="alert alert-warning" role="alert">
+        {`I can't see you...where are you hiding?`}
+      </div>
     )}
   </div>
 )

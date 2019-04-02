@@ -33,7 +33,7 @@ const CamerasAndClassifications = (props: Props) => (
         const cameraId = +id;
         return (
           <div className="col-6" key={cameraId}>
-            <h2>{props.cameras[cameraId].name}</h2>
+            <h4>{props.cameras[cameraId].name} camera</h4>
               <div className="row">
                 <VideoPlayer
                   frameChanged={props.frameUpdated}
@@ -44,10 +44,10 @@ const CamerasAndClassifications = (props: Props) => (
                 />
             </div>
             <div className="row">
-              <div className="col-sm">
+              <div className="col-sm-4">
                 <Pose keypoints={props.cameraKeypoints[cameraId]} boxes={[]} width={200} height={200*480/640}/>
               </div>
-              <div className="col-sm">
+              <div className="col-sm-8">
                 <Classifications
                   cameraId={cameraId}
                   addExample={(classId) => props.addExample(classId, cameraId)}

@@ -20,14 +20,22 @@ type Props = {
 const Scheduler = ({schedule, activities, cameras, createSchedule, clearSchedule}: Props ) => {
   return (
     <div>
-      <h1>Scheduler</h1>
-      <div className="row">
+      <div className='row'>
+        <div className="col-sm">
+          <h3>Randomized Schedule Generator</h3>
+        </div>
+      </div>
+      <div className='row'>
         <div className="col-sm">
           {!schedule && (
-            <ScheduleCreator activities={activities} cameras={cameras} createSchedule={createSchedule}/>
+            <div>
+              <h4>Generate a schedule</h4>
+              <ScheduleCreator activities={activities} cameras={cameras} createSchedule={createSchedule}/>
+            </div>
           )}
           {schedule && (
             <div>
+              <h4>Your schedule</h4>
               <ScheduleViewer schedule={schedule} cameraActivities={activities} cameras={cameras} />
               <button className='btn btn-secondary' onClick={clearSchedule}>Start over</button>
             </div>

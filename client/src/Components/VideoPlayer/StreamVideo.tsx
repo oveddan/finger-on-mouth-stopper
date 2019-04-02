@@ -37,7 +37,7 @@ class StreamVideo extends Component<StreamVideoProps> {
       }
 
       this.startUpdating();
-    }, 100);
+    }, 50);
   }
 
   startUpdating = () => {
